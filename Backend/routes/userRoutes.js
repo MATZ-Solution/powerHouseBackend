@@ -7,8 +7,8 @@ const { uploads } = require("../middleware/imageUploads");
 const multer = require('multer');
 const upload = multer();
 
-router.post("/signup", userController.createUser);
-router.post("/signin", userController.signin);
+router.post("/createUser", userController.createUser);
+router.post("/adminSignin", userController.adminSignin);
 router.get("/protected", verifyToken, userController.getUser);
 
 

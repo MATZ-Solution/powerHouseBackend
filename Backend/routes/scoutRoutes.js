@@ -10,5 +10,6 @@ const upload = multer();
 // router.post("/scouts", verifyToken , jobController.Job); 
 router.post("/scout", scoutController.scout); 
 router.get("/getscouts", scoutController.getscouts);
+router.get("/countScout", scoutController.countScout);
 
 module.exports = router; 

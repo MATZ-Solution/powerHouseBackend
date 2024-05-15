@@ -9,22 +9,7 @@ const { serialize } = require("cookie");
 const {
   selectQuery,
   deleteQuery,
-  insertInUsers,
-  updateUserCoverImage,
-  updateUserProfileImage,
-  updateProfileHeaderQuery,
-  updateProfileOverviewQuery,
-  insertUserExperienceQuery,
-  insertUserEducationQuery,
-  insertskillQuery,
-  updateCompanyProfileQuery,
-  updateUseraddressQuery,
-  insertProjectQuery,
-  insertInCompany,
-  projectSearchQuery,
-  jobSearchQuery,
-  userDashboardQuery,
-  websiteCountQuery,
+  insertScoutUserQuery,
   addResetToken,
   updatePassword
 
@@ -43,44 +28,37 @@ const config = process.env;
 
 // ###################### user Create #######################################
 exports.createUser = async function (req, res) {
-  const { firstName, lastName, email, password, userType } = req.body;
+  const { Name,phoneNumber, email,address,position, password } = req.body;
   const currentDate = new Date();
   try {
-    const selectResult = await queryRunner(selectQuery("user", "Email"),[email]);
-    // const selectResult = await queryRunner(getuserQuery,[email]);
-    // const result = mysqliQuery(conn,qyery)
+    const selectResult = await queryRunner(selectQuery("scout_member","phoneNumber"),[phoneNumber]);
+  
     if (selectResult[0].length > 0) {
-      const name = firstName + " "+lastName
-      const mailSubject = "Welcome To MATZ Solutions Freelance"
-      await sendMail(email, mailSubject, name)
+      
       return res.status(200).json({
         statusCode : 200, 
-        message: "Email already exists",
+        message: `user already exists on this Number ${phoneNumber}`,
       });
-      // return res.status(400).send("Email already exists");
     }
 
     const hashPassword = await hashedPassword(password);
     const salt = bcrypt.genSaltSync(10);
     const id = bcrypt
-      .hashSync(lastName + new Date().getTime().toString(), salt)
+      .hashSync(Name + new Date().getTime().toString(), salt)
       .substring(0, 10);
-    const insertResult = await queryRunner(insertInUsers, [
-      firstName,
-      lastName,
+    const insertResult = await queryRunner(insertScoutUserQuery, [
+      Name,
+      phoneNumber,
       email,
+      address,
+      position,      
       hashPassword,
-      userType,
       currentDate,
     ]);
-    const name = firstName + " " + lastName;
-    const mailSubject = "Freelancing HR Welcome Email";
-    if (insertResult[0].affectedRows > 0) {
-      
+    if (insertResult[0].affectedRows > 0) {      
+      // const mailSubject = "PowerHouse Welcome Email";
       // await sendMail(email, mailSubject, name);
-      if(userType == "company"){
-        const insertCompanyIdResult = await queryRunner(insertInCompany, [insertResult[0].insertId]); 
-      }
+     
       return res.status(200).json({ 
         message: "User added successfully",
         id : insertResult[0].insertid
@@ -99,14 +77,16 @@ exports.createUser = async function (req, res) {
       });
   }
 };
-// ###################### user Create #######################################
+// ###################### Scout user Create #######################################
+
+
 
 // ###################### SignIn user start #######################################
-exports.signin = async function (req, res) {
+exports.adminSignin = async function (req, res) {
 
   const { email, password } = req.body;
   try {
-      const selectResult = await queryRunner(selectQuery("user", "email"), [
+      const selectResult = await queryRunner(selectQuery("admin", "email"), [
         email,
       ]);
       if (selectResult[0].length === 0) {
@@ -135,15 +115,11 @@ exports.signin = async function (req, res) {
       }
     
   } catch (error) {
-    // console.log(error);
-    // res.status(400).send(error.message);
     return res.status(500).json({
       statusCode : 500,
       message: "Failed to SignIn",
       error: error.message
     });
-    
-
   }
 };
 // ###################### SignIn user End #######################################

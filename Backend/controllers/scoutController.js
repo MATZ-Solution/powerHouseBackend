@@ -2,6 +2,7 @@ const {
   selectQuery,
   deleteQuery,
   insertScoutQuery,
+  countScoutQuery
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
 
@@ -63,3 +64,29 @@ exports.getscouts = async (req, res) => {
   }
 };
 // ###################### Get Scout data End #######################################
+
+
+
+// ###################### Get Scout Count start #######################################
+exports.countScout = async (req, res) => {
+  try {
+    // const { userId } = req.user;
+    const selectResult = await queryRunner(countScoutQuery);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0]
+      });
+    } else {
+      res.status(404).json({ message: "Scout Data Count Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode : 500,
+      message: "Failed to Get Scout Count",
+      error: error.message
+    });
+  }
+};
+// ###################### Get Scout Count End #######################################
