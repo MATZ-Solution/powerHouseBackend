@@ -82,13 +82,23 @@ exports.createUser = async function (req, res) {
 
 
 // ###################### SignIn user start #######################################
-exports.adminSignin = async function (req, res) {
+exports.signIn = async function (req, res) {
 
   const { email, password } = req.body;
   try {
-      const selectResult = await queryRunner(selectQuery("admin", "email"), [
-        email,
-      ]);
+    let table;
+    let column;
+    if(email == "admin@powerhouse.com"){
+      table = "admin";
+      column = "email"
+    }else{
+      table = "scout_member";
+      column = "phoneNumber"
+
+    }
+    const selectResult = await queryRunner(selectQuery(table, column), [
+      email,
+    ]);
       if (selectResult[0].length === 0) {
         return res.status(200).json({
           statusCode : 200, 

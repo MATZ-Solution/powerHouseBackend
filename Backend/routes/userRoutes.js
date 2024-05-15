@@ -8,7 +8,7 @@ const multer = require('multer');
 const upload = multer();
 
 router.post("/createUser", userController.createUser);
-router.post("/adminSignin", userController.adminSignin);
+router.post("/signIn", userController.signIn);
 router.get("/protected", verifyToken, userController.getUser);
 
 
