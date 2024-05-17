@@ -100,8 +100,8 @@ exports.signIn = async function (req, res) {
       email,
     ]);
       if (selectResult[0].length === 0) {
-        return res.status(200).json({
-          statusCode : 200, 
+        return res.status(404).json({
+          statusCode : 404, 
           message: "Email not found",
         });
       } else if (await bcrypt.compare(password, selectResult[0][0].password)) {
@@ -118,8 +118,8 @@ exports.signIn = async function (req, res) {
         });
         
       } else {
-        return res.status(500).json({
-          statusCode : 500, 
+        return res.status(404).json({
+          statusCode : 404, 
           message: "Incorrect Password",
         });
       }
@@ -133,6 +133,66 @@ exports.signIn = async function (req, res) {
   }
 };
 // ###################### SignIn user End #######################################
+
+
+// ###################### Get Scout Members start #######################################
+exports.getScoutsMember = async (req, res) => {
+  try {
+    // const { userId } = req.user;
+    const selectResult = await queryRunner(selectQuery("scout_member"));
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0]
+      });
+    } else {
+      res.status(404).json({ message: "Scout Members Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode : 500,
+      message: "Failed to Get Scout Members",
+      error: error.message
+    });
+  }
+};
+// ###################### Get Scout Members End #######################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // ###################### Forget Password start #######################################

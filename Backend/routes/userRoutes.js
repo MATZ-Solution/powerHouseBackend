@@ -9,7 +9,8 @@ const upload = multer();
 
 router.post("/createUser", userController.createUser);
 router.post("/signIn", userController.signIn);
-router.get("/protected", verifyToken, userController.getUser);
+router.get("/scoutsMember", userController.getScoutsMember);
+// router.get("/protected", verifyToken, userController.getUser);
 
 
 
