@@ -27,7 +27,7 @@ const config = process.env;
 
 
 // ###################### user Create #######################################
-exports.createUser = async function (req, res) {
+exports.createScoutUser = async function (req, res) {
   const { Name,phoneNumber, email,address,position, password } = req.body;
   const currentDate = new Date();
   try {
@@ -96,13 +96,14 @@ exports.signIn = async function (req, res) {
       column = "phoneNumber"
 
     }
+    console.log(table, column);
     const selectResult = await queryRunner(selectQuery(table, column), [
       email,
     ]);
       if (selectResult[0].length === 0) {
         return res.status(404).json({
           statusCode : 404, 
-          message: "Email not found",
+          message: `${column} not found`,
         });
       } else if (await bcrypt.compare(password, selectResult[0][0].password)) {
         const id = selectResult[0][0].id;
@@ -158,6 +159,7 @@ exports.getScoutsMember = async (req, res) => {
   }
 };
 // ###################### Get Scout Members End #######################################
+
 
 
 

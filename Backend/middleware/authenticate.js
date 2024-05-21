@@ -11,15 +11,15 @@ const verifyToken = async (req, res, next) => {
     return res.status(401).send("Access Denied");
   }
     const decoded = jwt.verify(token, "11madklfnqo3393");
-    const result = await queryRunner(selectQuery("user", "id"), [
-      decoded.id,
-    ]);
+    if(decoded.email == "admin@powerhouse.com"){
+      result = await queryRunner(selectQuery("admin", "id"), [decoded.id]);
+    }else{
+      result = await queryRunner(selectQuery("scout_member", "id"), [decoded.id]);
+    }
     req.user = {
       email: decoded.email,
       userId: result[0][0].id,
-      name : result[0][0].firstName  + ' '+ result[0][0].lastName , 
-      userType: result[0][0].userType,
-      profileImage: result[0][0].profileImage,
+      name : result[0][0].name, 
 
     };
     next();
