@@ -7,18 +7,18 @@ const { uploads } = require("../middleware/imageUploads");
 const multer = require('multer');
 const upload = multer();
 
-router.post("/createUser", userController.createUser);
+router.post("/createScoutUser", verifyToken, userController.createScoutUser);
 router.post("/signIn", userController.signIn);
-router.get("/scoutsMember", userController.getScoutsMember);
-// router.get("/protected", verifyToken, userController.getUser);
+router.get("/scoutsMember", verifyToken, userController.getScoutsMember);
+router.get("/protected", verifyToken, userController.getUser);
 
 
 
 
-router.post("/sendEmail", userController.sendEmail);
-router.post("/forgetPassword", userController.createResetEmail);
-router.post("/verifyResetEmailCode", userController.verifyResetEmailCode);
-router.put("/updatePassword", userController.updatePassword);
-router.put("/resendCode", userController.resendCode);
+// router.post("/sendEmail", userController.sendEmail);
+// router.post("/forgetPassword", userController.createResetEmail);
+// router.post("/verifyResetEmailCode", userController.verifyResetEmailCode);
+// router.put("/updatePassword", userController.updatePassword);
+// router.put("/resendCode", userController.resendCode);
 
 module.exports = router;
