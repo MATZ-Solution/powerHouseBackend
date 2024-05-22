@@ -17,9 +17,10 @@ router.post('/AddCityCSV', verifyToken , uploadCSV.single('file'), scoutControll
 router.post('/AddArea', verifyToken , scoutController.AddArea);
 router.post('/AddSubArea', verifyToken , scoutController.AddSubArea);
 router.get('/getCities', verifyToken , scoutController.getCities);
-router.get('/getAreas', scoutController.getAreas);
-// router.get('/getAreas', verifyToken , scoutController.getAreas);
+// router.get('/getAreas', scoutController.getAreas);
+router.get('/getAreas', verifyToken , scoutController.getAreas);
 router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
+// router.get('/getSubAreas', scoutController.getSubAreas);
 
 
 module.exports = router; 

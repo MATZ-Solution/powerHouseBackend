@@ -280,7 +280,6 @@ exports.getCities = async (req, res) => {
 };
 // ###################### Get Cities End #######################################
 
-// const selectResult = await queryRunner(selectQuery("area","cityId"),[cityId]);
 
 // ###################### Get Areas By id start #######################################
 exports.getAreas = async (req, res) => {
@@ -315,25 +314,32 @@ exports.getAreas = async (req, res) => {
 
 
 // ###################### Get Sub Areas By id start #######################################
-exports.getSubAreas = async (req, res) => {
-  try {
-    const { areaId } = req.body;
-    const selectResult = await queryRunner(selectQuery("subArea","areaId"),[areaId]);
-    if (selectResult[0].length > 0) {
-      res.status(200).json({
-        statusCode: 200,
-        message: "Success",
-        data: selectResult[0]
+  exports.getSubAreas = async (req, res) => {
+    try {
+      const { areaId } = req.body;
+      let selectResult;
+      if (!Array.isArray(areaId) || areaId.length === 0) {
+        selectResult = await queryRunner(selectQuery("subArea","areaId"),[areaId]);
+      }else{
+        const placeholders = areaId.map(() => '?').join(', ');
+        const getSubAreasQuery = `SELECT * FROM subArea WHERE areaId IN (${placeholders})`;
+      selectResult = await queryRunner(getSubAreasQuery, [...areaId]);
+      }
+      if (selectResult[0].length > 0) {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0]
+        });
+      } else {
+        res.status(404).json({ message: "No data Found" });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        statusCode : 500,
+        message: "Failed to Get Subarea list",
+        error: error.message
       });
-    } else {
-      res.status(404).json({ message: "No data Found" });
     }
-  } catch (error) {
-    return res.status(500).json({
-      statusCode : 500,
-      message: "Failed to Get Sub Area list",
-      error: error.message
-    });
-  }
-};
+  };
 // ###################### Get Sub Areas By id End #######################################
