@@ -12,7 +12,6 @@ const {
   insertScoutUserQuery,
   addResetToken,
   updatePassword
-
 } = require("../constants/queries");
 
 const { hashedPassword } = require("../helper/hash");

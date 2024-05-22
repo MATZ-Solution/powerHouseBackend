@@ -5,7 +5,8 @@ const {
   countScoutQuery,
   insertCityQuery,
   insertAreaQuery,
-  insertSubAreaQuery
+  insertSubAreaQuery,
+  // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
 const fs = require('fs');
@@ -279,12 +280,20 @@ exports.getCities = async (req, res) => {
 };
 // ###################### Get Cities End #######################################
 
+// const selectResult = await queryRunner(selectQuery("area","cityId"),[cityId]);
 
 // ###################### Get Areas By id start #######################################
 exports.getAreas = async (req, res) => {
   try {
-    const { cityId } = req.query;
-    const selectResult = await queryRunner(selectQuery("area","cityId"),[cityId]);
+    const { cityId } = req.body;
+    let selectResult;
+    if (!Array.isArray(cityId) || cityId.length === 0) {
+      selectResult = await queryRunner(selectQuery("area","cityId"),[cityId]);
+    }else{
+      const placeholders = cityId.map(() => '?').join(', ');
+      const getAreasQuery = `SELECT * FROM area WHERE cityId IN (${placeholders})`;
+    selectResult = await queryRunner(getAreasQuery, [...cityId]);
+    }
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
