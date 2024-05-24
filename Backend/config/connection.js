@@ -14,7 +14,7 @@ const createPool = async () => {
 
   host: "153.92.7.247",
   // port:"3306",
-  user:"powerhouse_new_user",
+  user:"matzsolu_powerhouse_new_user",
     password:"12345678",
     database:"matzsolu_powerhouse_new"
 
