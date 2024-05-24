@@ -12,7 +12,6 @@ const {
   insertScoutUserQuery,
   addResetToken,
   updatePassword
-
 } = require("../constants/queries");
 
 const { hashedPassword } = require("../helper/hash");
@@ -35,7 +34,7 @@ exports.createScoutUser = async function (req, res) {
   
     if (selectResult[0].length > 0) {
       
-      return res.status(200).json({
+      return res.status(404).json({
         statusCode : 200, 
         message: `user already exists on this Number ${phoneNumber}`,
       });
