@@ -15,7 +15,7 @@ const path = require('path');
 // ###################### Scout Start #######################################
 exports.scout = async (req, res)=> {
   try {
-    
+    console.log("req.body",req.body);
     const {projectName,projectType,city,area,block,buildingType,
       size,address,pinLocation,contractorName,contractorNumber} = req.body;
       
