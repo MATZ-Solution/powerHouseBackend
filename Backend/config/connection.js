@@ -15,8 +15,8 @@ const createPool = async () => {
   host: "localhost",
   port:"3306",
   user:"root",
-    password:"",
-    database:"power_house"
+    password:"password",
+    database:"powerhouse"
 
 
 
