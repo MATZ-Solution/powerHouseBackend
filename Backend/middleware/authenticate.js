@@ -3,12 +3,12 @@ const { queryRunner } = require("../helper/queryRunner");
 const { selectQuery } = require("../constants/queries");
 const config = process.env;
 const verifyToken = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).send("Access Denied");
-    }
+  try { 
+  const token = req.headers.authorization.split(" ")[1];
+    console.log(token)
+  if (!token) {
+    return res.status(401).send("Access Denied");
+  }
     const decoded = jwt.verify(token, "11madklfnqo3393");
     if (decoded.email == "admin@powerhouse.com") {
       result = await queryRunner(selectQuery("admin", "id"), [decoded.id]);

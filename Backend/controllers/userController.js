@@ -82,7 +82,7 @@ exports.createScoutUser = async function (req, res) {
 
 // ###################### SignIn user start #######################################
 exports.signIn = async function (req, res) {
-
+console.log(req.body)
   const { email, password } = req.body;
   try {
     let table;
@@ -100,6 +100,7 @@ exports.signIn = async function (req, res) {
       email,
     ]);
       if (selectResult[0].length === 0) {
+        console.log("Email not found");
         return res.status(404).json({
           statusCode : 404, 
           message: `${column} not found`,
@@ -125,6 +126,7 @@ exports.signIn = async function (req, res) {
       }
     
   } catch (error) {
+    console.log("error",error);
     return res.status(500).json({
       statusCode : 500,
       message: "Failed to SignIn",

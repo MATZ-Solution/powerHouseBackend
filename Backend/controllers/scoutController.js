@@ -16,20 +16,10 @@ const path = require("path");
 // ###################### Scout Start #######################################
 exports.scout = async (req, res) => {
   try {
-    console.log("1");
-    const {
-      projectName,
-      projectType,
-      city,
-      area,
-      block,
-      buildingType,
-      size,
-      address,
-      pinLocation,
-      contractorName,
-      contractorNumber,
-    } = req.body;
+    console.log("req.body",req.body);
+    const {projectName,projectType,city,area,block,buildingType,
+      size,address,pinLocation,contractorName,contractorNumber} = req.body;
+      
     // const {userId} = req.user;
     const currentDate = new Date();
 
@@ -62,6 +52,7 @@ exports.scout = async (req, res) => {
         .json({ statusCode: 500, message: "Failed to Create Scout " });
     }
   } catch (error) {
+    console.log("error",error);
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Create Scout",
