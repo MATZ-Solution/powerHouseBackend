@@ -261,7 +261,7 @@ exports.AddSubArea = async (req, res) => {
   const { areaId, subAreaName } = req.body;
   try {
     const selectResult = await queryRunner(
-      selectQuery("subArea", "subAreaName"),
+      selectQuery("subarea", "subAreaName"),
       [subAreaName]
     );
     if (selectResult[0].length > 0) {
@@ -352,7 +352,7 @@ exports.getSubAreas = async (req, res) => {
     let areaArray = areaId.split(",");
     let selectResult;
       const placeholders = areaArray.map(() => "?").join(", ");
-      const getSubAreasQuery = `SELECT * FROM subArea WHERE areaId IN (${placeholders})`;
+      const getSubAreasQuery = `SELECT * FROM subarea WHERE areaId IN (${placeholders})`;
       selectResult = await queryRunner(getSubAreasQuery, [...areaArray]);
     if (selectResult[0].length > 0) {
       res.status(200).json({
