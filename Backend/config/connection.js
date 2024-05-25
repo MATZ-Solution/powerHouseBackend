@@ -18,8 +18,6 @@ const createPool = async () => {
     password:"12345678",
     database:"matzsolu_powerhouse_new"
 
-
-
   });
 
   return pool;
