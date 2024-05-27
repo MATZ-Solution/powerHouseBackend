@@ -245,7 +245,82 @@ exports.AddArea = async (req, res) => {
     });
   }
 };
-// ###################### Add Area #######################################
+// ###################### Add CSV Area #######################################
+
+exports.AddAreaCSV = async (req, res) => {
+  console.log("this is city id", req.body.cityId)
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "No file uploaded or file extension is not valid" });
+    }
+
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname);
+
+    if (ext !== ".csv") {
+      // Remove the invalid file
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error("Failed to delete invalid file:", filePath);
+        }
+      });
+      return res.status(400).json({ message: "File extension is not valid" });
+    }
+
+    const areas = [];
+
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        areas.push(row);
+      })
+      .on("end", async () => {
+        try {
+          // Process each city in the CSV file
+          for (const area of areas) {
+            const areaName = area.AreaName; // Assuming your CSV has a column named 'cityName'
+            const selectResult = await queryRunner(
+              selectQuery("area", "AreaName"),
+              [areaName]
+            );
+
+            let query = "INSERT INTO area(cityId, AreaName) VALUES(?,?)"
+            if (selectResult[0].length === 0) {
+              await queryRunner(query, [req.body.cityId, areaName]);
+            }
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Areas processed successfully" });
+        } catch (error) {
+          // console.log("this is error", error)
+          return res.status(500).json({
+            message: "Failed to process areas",
+            error: error.message,
+          });
+        } finally {
+          // Clean up the uploaded file
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error("Failed to delete file:", filePath);
+            }
+          });
+        }
+      });
+  } catch (error) {
+    console.log("this is error", err)
+    return res
+      .status(500)
+      .json({ message: "Failed to process file", error: error.message });
+  }
+};
+
+// ###################### END #######################################
+
 
 // ###################### Add SubArea #######################################
 exports.AddSubArea = async (req, res) => {
@@ -283,6 +358,84 @@ exports.AddSubArea = async (req, res) => {
   }
 };
 // ###################### Add SubArea #######################################
+
+
+// ###################### Add CSV Area #######################################
+
+exports.AddSubAreaCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "No file uploaded or file extension is not valid" });
+    }
+
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname);
+
+    if (ext !== ".csv") {
+      // Remove the invalid file
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error("Failed to delete invalid file:", filePath);
+        }
+      });
+      return res.status(400).json({ message: "File extension is not valid" });
+    }
+
+    const subAreas = [];
+
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        subAreas.push(row);
+      })
+      .on("end", async () => {
+        try {
+          // Process each city in the CSV file
+          for (const subArea of subAreas) {
+            const subAreaName = subArea.subAreaName; // Assuming your CSV has a column named 'cityName'
+            const selectResult = await queryRunner(
+              selectQuery("subarea", "subAreaName"),
+              [subAreaName]
+            );
+
+            let query = "INSERT INTO subarea(areaId, subAreaName) VALUES(?,?)"
+            if (selectResult[0].length === 0) {
+              await queryRunner(query, [req.body.areaId, subAreaName]);
+            }
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Areas processed successfully" });
+        } catch (error) {
+          // console.log("this is error", error)
+          return res.status(500).json({
+            message: "Failed to process Sub areas",
+            error: error.message,
+          });
+        } finally {
+          // Clean up the uploaded file
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error("Failed to delete file:", filePath);
+            }
+          });
+        }
+      });
+  } catch (error) {
+    console.log("this is error", err)
+    return res
+      .status(500)
+      .json({ message: "Failed to process file", error: error.message });
+  }
+};
+
+// ###################### END #######################################
+
+
 
 // ###################### Get Cities start #######################################
 exports.getCities = async (req, res) => {
