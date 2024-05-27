@@ -11,31 +11,29 @@ const {
   deleteQuery,
   insertScoutUserQuery,
   addResetToken,
-  updatePassword
+  updatePassword,
 } = require("../constants/queries");
 
 const { hashedPassword } = require("../helper/hash");
 const { queryRunner } = require("../helper/queryRunner");
 // const userServices = require("../Services/userServices");
-const imageUploads = require("./../middleware/imageUploads")
+const imageUploads = require("./../middleware/imageUploads");
 const { log } = require("console");
 const config = process.env;
 
-
-
-
-
 // ###################### user Create #######################################
 exports.createScoutUser = async function (req, res) {
-  const { Name,phoneNumber, email,address,position, password } = req.body;
+  const { Name, phoneNumber, email, address, position, password } = req.body;
   const currentDate = new Date();
   try {
-    const selectResult = await queryRunner(selectQuery("scout_member","phoneNumber"),[phoneNumber]);
-  
+    const selectResult = await queryRunner(
+      selectQuery("scout_member", "phoneNumber"),
+      [phoneNumber]
+    );
+
     if (selectResult[0].length > 0) {
-      
       return res.status(404).json({
-        statusCode : 200, 
+        statusCode: 200,
         message: `user already exists on this Number ${phoneNumber}`,
       });
     }
@@ -50,92 +48,84 @@ exports.createScoutUser = async function (req, res) {
       phoneNumber,
       email,
       address,
-      position,      
+      position,
       hashPassword,
       currentDate,
     ]);
-    if (insertResult[0].affectedRows > 0) {      
+    if (insertResult[0].affectedRows > 0) {
       // const mailSubject = "PowerHouse Welcome Email";
       // await sendMail(email, mailSubject, name);
-     
-      return res.status(200).json({ 
+
+      return res.status(200).json({
         message: "User added successfully",
-        id : insertResult[0].insertid
+        id: insertResult[0].insertid,
       });
     } else {
       return res.status(200).json({
-        statusCode : 200, 
+        statusCode: 200,
         message: "Failed to add user",
       });
       // return res.status(500).send("Failed to add user");
     }
   } catch (error) {
     return res.status(500).json({
-      message : "Failed to add user",
-       message: error.message 
-      });
+      message: "Failed to add user",
+      message: error.message,
+    });
   }
 };
 // ###################### Scout user Create #######################################
 
-
-
 // ###################### SignIn user start #######################################
 exports.signIn = async function (req, res) {
-console.log(req.body)
+  console.log(req.body);
   const { email, password } = req.body;
   try {
     let table;
     let column;
-    if(email == "admin@powerhouse.com"){
+    if (email == "admin@powerhouse.com") {
       table = "admin";
-      column = "email"
-    }else{
+      column = "email";
+    } else {
       table = "scout_member";
-      column = "phoneNumber"
-
+      column = "phoneNumber";
     }
     console.log(table, column);
-    const selectResult = await queryRunner(selectQuery(table, column), [
-      email,
-    ]);
-      if (selectResult[0].length === 0) {
-        console.log("Email not found");
-        return res.status(404).json({
-          statusCode : 404, 
-          message: `${column} not found`,
-        });
-      } else if (await bcrypt.compare(password, selectResult[0][0].password)) {
-        const id = selectResult[0][0].id;
+    const selectResult = await queryRunner(selectQuery(table, column), [email]);
+    if (selectResult[0].length === 0) {
+      console.log("Email not found");
+      return res.status(404).json({
+        statusCode: 404,
+        message: `${column} not found`,
+      });
+    } else if (await bcrypt.compare(password, selectResult[0][0].password)) {
+      const id = selectResult[0][0].id;
 
-        const token = jwt.sign({ email, id }, "11madklfnqo3393", {
-          expiresIn: "3h",
-        });
-        return res.status(200).json({ 
-          message: "SignIn successfully",
-          id,
-          token,
-          data : selectResult[0] 
-        });
-        
-      } else {
-        return res.status(404).json({
-          statusCode : 404, 
-          message: "Incorrect Password",
-        });
-      }
-    
+      const token = jwt.sign({ email, id }, "11madklfnqo3393", {
+        expiresIn: "3h",
+      });
+      return res.status(200).json({
+        message: "SignIn successfully",
+        id,
+        token,
+        data: selectResult[0],
+      });
+    } else {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Incorrect Password",
+      });
+    }
   } catch (error) {
-    console.log("error",error);
+    console.log("error", error);
     return res.status(500).json({
-      statusCode : 500,
+      statusCode: 500,
       message: "Failed to SignIn",
-      error: error.message
+      error: error.message,
     });
   }
 };
 // ###################### SignIn user End #######################################
-
 
 // ###################### Get Scout Members start #######################################
 exports.getScoutsMember = async (req, res) => {
@@ -146,100 +136,60 @@ exports.getScoutsMember = async (req, res) => {
       res.status(200).json({
         statusCode: 200,
         message: "Success",
-        data: selectResult[0]
+        data: selectResult[0],
       });
     } else {
       res.status(404).json({ message: "Scout Members Not Found" });
     }
   } catch (error) {
     return res.status(500).json({
-      statusCode : 500,
+      statusCode: 500,
       message: "Failed to Get Scout Members",
-      error: error.message
+      error: error.message,
     });
   }
 };
 // ###################### Get Scout Members End #######################################
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ###################### Forget Password start #######################################
 exports.ForgetPassword = async function (req, res) {
   const { email } = req.body;
   try {
-      const selectResult = await queryRunner(selectQuery("user", "email"), [
-        email,
-      ]);
-      if (selectResult[0].length === 0) {
-        return res.status(200).json({
-          statusCode : 200, 
-          message: "Email not found",
-        });
-      } else if (await bcrypt.compare(password, selectResult[0][0].password)) {
-        const id = selectResult[0][0].id;
-        // const token = jwt.sign({ email, id }, config.JWT_SECRET_KEY, {
-        const token = jwt.sign({ email, id }, "11madklfnqo3393", {
-          expiresIn: "3h",
-        });
-        return res.status(200).json({ 
-          message: "SignIn successfully",
-          id,
-          token,
-          data : selectResult[0] 
-        });
-        
-      } else {
-        return res.status(500).json({
-          statusCode : 500, 
-          message: "Incorrect Password",
-        });
-      }
+    const selectResult = await queryRunner(selectQuery("user", "email"), [
+      email,
+    ]);
+    if (selectResult[0].length === 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Email not found",
+      });
+    } else if (await bcrypt.compare(password, selectResult[0][0].password)) {
+      const id = selectResult[0][0].id;
+      // const token = jwt.sign({ email, id }, config.JWT_SECRET_KEY, {
+      const token = jwt.sign({ email, id }, "11madklfnqo3393", {
+        expiresIn: "3h",
+      });
+      return res.status(200).json({
+        message: "SignIn successfully",
+        id,
+        token,
+        data: selectResult[0],
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Incorrect Password",
+      });
+    }
   } catch (error) {
     return res.status(500).json({
-      statusCode : 500,
+      statusCode: 500,
       message: "Failed to Forget password",
-      error: error.message
+      error: error.message,
     });
   }
 };
 // ###################### Forget Password End #######################################
-
-
 
 // ###################### Protected user Start #######################################
 
@@ -249,34 +199,31 @@ exports.getUser = (req, res) => {
 };
 // ###################### Protected user End #######################################
 
-
-
 // ###################### Email start #######################################
 exports.sendEmail = async (req, res) => {
   try {
-    const {email, mailSubject, name} = req.body
-        const asdfg = await sendMail(email, mailSubject, name)
-        // if(selectResult.length > 0){
-          res.status(200).json({
-            statusCode: 200,
-            message: "Success",
-          });
-        // }else{
-          // res.status(200).json({
-          //   statusCode: 200,
-          //   message: "Not Data Found",
-          // });
-        // }
+    const { email, mailSubject, name } = req.body;
+    const asdfg = await sendMail(email, mailSubject, name);
+    // if(selectResult.length > 0){
+    res.status(200).json({
+      statusCode: 200,
+      message: "Success",
+    });
+    // }else{
+    // res.status(200).json({
+    //   statusCode: 200,
+    //   message: "Not Data Found",
+    // });
+    // }
   } catch (error) {
     return res.status(500).json({
-      statusCode : 500,
+      statusCode: 500,
       message: "Failed to Get Dashboard Data",
-      error: error.message
+      error: error.message,
     });
   }
 };
 // ###################### Email End #######################################
-
 
 //  ############################# Reset Email ############################################################
 exports.createResetEmail = async (req, res) => {
@@ -289,7 +236,8 @@ exports.createResetEmail = async (req, res) => {
     ]);
     if (selectResult[0].length > 0) {
       const userid = selectResult[0][0].id;
-      const name = selectResult[0][0].firstName + " " + selectResult[0][0].lastName;
+      const name =
+        selectResult[0][0].firstName + " " + selectResult[0][0].lastName;
       await ForgetsendMail(email, mailSubject, random, name);
       const now = new Date();
       const formattedDate = now.toISOString().slice(0, 19).replace("T", " ");
@@ -301,11 +249,12 @@ exports.createResetEmail = async (req, res) => {
       if (updateResult[0].affectedRows === 0) {
         res.status(200).json({ message: "Token Not Updated in database" });
       } else {
-        res.status(200).json({ message: "Successfully Email Sended", id: userid });
+        res
+          .status(200)
+          .json({ message: "Successfully Email Sended", id: userid });
       }
     } else if (selectResult[0].length === 0) {
-      res.status(200).json({ message: "Email not found"});
-
+      res.status(200).json({ message: "Email not found" });
     }
   } catch (error) {
     console.log(error);
@@ -314,16 +263,14 @@ exports.createResetEmail = async (req, res) => {
 };
 //  ############################# Reset Email ############################################################
 
-
-
 //  ############################# Verify Reset Email Code ############################################################
 exports.verifyResetEmailCode = async (req, res) => {
   const { id, token } = req.body;
   try {
-    const selectResult = await queryRunner(
-      selectQuery("user", "id", "token"),
-      [id, token]
-    );
+    const selectResult = await queryRunner(selectQuery("user", "id", "token"), [
+      id,
+      token,
+    ]);
     if (selectResult[0].length > 0) {
       const now = new Date(selectResult[0][0].updatedAt);
       const now2 = new Date();
@@ -355,7 +302,6 @@ exports.verifyResetEmailCode = async (req, res) => {
   }
 };
 //  ############################# Verify Reset Email Code ############################################################
-
 
 //  ############################# Update Password ############################################################
 
@@ -389,8 +335,6 @@ exports.updatePassword = async (req, res) => {
   }
 };
 //  ############################# Update Password ############################################################
-
-
 
 //  ############################# resend Code ############################################################
 exports.resendCode = async (req, res) => {
@@ -426,3 +370,38 @@ exports.resendCode = async (req, res) => {
   }
 };
 //  ############################# resend Code ############################################################
+
+// ###################### Create SOP #######################################
+exports.createSOP = async (req, res) => {
+  const { userIds, projectType, cityId, areasId, projectDomain } = req.body;
+  try {
+    let user = userIds.join(",");
+    let area = areasId.join(",");
+
+    let insertQuery =
+      "INSERT INTO sop(city,area,projectType,projectDomain,scoutMemberID) VALUES (?,?,?,?,?)";
+    const insertSOP = await queryRunner(insertQuery, [
+      cityId,
+      area,
+      projectType,
+      projectDomain,
+      user,
+    ]);
+    if (insertSOP[0].affectedRows > 0) {
+      return res.status(200).json({
+        message: "SOP added successfully",
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to add SOP",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to to add SOP",
+      error: error.message,
+    });
+  }
+};
