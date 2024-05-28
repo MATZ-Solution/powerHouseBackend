@@ -23,5 +23,5 @@ exports.countScoutQuery = `select status, count(*) as count  from scout group BY
 exports.updateUserProfileImage = `UPDATE user SET profileImage = ?, ProfileImageKey = ? WHERE id = ?`;
 exports.insertCityQuery = "INSERT INTO city (cityName) VALUES (?)";
 exports.insertAreaQuery = "INSERT INTO area (cityId,areaName) VALUES (?,?)";
-exports.insertSubAreaQuery = "INSERT INTO subArea (areaId,subAreaName) VALUES (?,?)";
+exports.insertSubAreaQuery = "INSERT INTO subarea (areaId,subAreaName) VALUES (?,?)";
 exports.insertMeetingMembersQuery = "INSERT INTO meetingmembers (name,phoneNumber,email,address,position,cityId,areaIds,subAreaIds,created_at) VALUES (?,?,?,?,?,?,?,?,?)";
