@@ -45,8 +45,8 @@ exports.scout = async (req, res) => {
       if (req.files.length > 0) {
         for (const file of req.files) {
           const insertFileResult = await queryRunner(
-            "INSERT INTO location_files (fileUrl, fileKey) VALUES (?, ?)",
-            [file.location, file.key]
+            "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
+            [id, file.location, file.key]
           );
           if (insertFileResult[0].affectedRows <= 0) {
             // If any file insertion fails, return an error response
