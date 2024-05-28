@@ -12,11 +12,16 @@ const createPool = async () => {
     // password:"Windows!@#$567",
     // database:"matzsolu_freelancehr"
 
-  host: "153.92.7.247",
-  // port:"3306",
-  user:"matzsolu_powerhouse_new_user",
-    password:"12345678",
-    database:"matzsolu_powerhouse_new"
+  // host: "153.92.7.247",
+  // // port:"3306",
+  // user:"matzsolu_powerhouse_new_user",
+  //   password:"12345678",
+  //   database:"matzsolu_powerhouse_new"
+  host: "localhost",
+  port:"3306",
+  user:"root",
+    password:"",
+    database:"powerhouse"
 
 
 

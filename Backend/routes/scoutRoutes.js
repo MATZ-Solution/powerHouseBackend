@@ -6,10 +6,10 @@ const { uploads } = require("../middleware/imageUploads");
 const { uploadCSV } = require("../middleware/uploadCSV");
 const multer = require('multer');
 const upload = multer();
-
+const s3Upload = require('../middleware/s3Upload');
 
 // router.post("/scouts", verifyToken , jobController.Job); 
-router.post("/scout", verifyToken , scoutController.scout); 
+router.post("/scout", verifyToken,s3Upload.array('files', 5) , scoutController.scout); 
 router.get("/getscouts", verifyToken , scoutController.getscouts);
 router.get("/countScout", verifyToken , scoutController.countScout);
 router.post('/AddCity', verifyToken , scoutController.AddCity);
