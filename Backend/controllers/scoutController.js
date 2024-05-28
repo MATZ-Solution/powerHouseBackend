@@ -16,8 +16,7 @@ const path = require("path");
 // ###################### Scout Start #######################################
 exports.scout = async (req, res) => {
   try {
-    console.log("req.body",req.body);
-    console.log("req.files",req.files);
+    const {userId}=req.user;
     const {projectName,projectType,city,area,block,buildingType,
       size,address,pinLocation,contractorName,contractorNumber,type} = req.body;
       
@@ -39,14 +38,15 @@ exports.scout = async (req, res) => {
       contractorNumber,
       "Pending",
       currentDate,
+      userId
     ]);
     if (insertResult[0].affectedRows > 0) {
       const id = insertResult[0].insertId;
       if (req.files.length > 0) {
         for (const file of req.files) {
           const insertFileResult = await queryRunner(
-            "INSERT INTO location_files (scoutedBy, fileUrl, fileKey) VALUES (?, ?, ?)",
-            [id, file.location, file.key]
+            "INSERT INTO location_files (fileUrl, fileKey) VALUES (?, ?)",
+            [file.location, file.key]
           );
           if (insertFileResult[0].affectedRows <= 0) {
             // If any file insertion fails, return an error response

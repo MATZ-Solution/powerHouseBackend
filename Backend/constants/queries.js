@@ -17,7 +17,7 @@ exports.deleteQuery = (table, ...field) => {
   }
 };
 
-exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area,block,buildingType,size,address,pinLocation,contractorName,contractorNumber,status,created_at) VALUES (?,?,?, ?, ?, ?,?,?,?, ?, ?, ?,?)";
+exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area,block,buildingType,size,address,pinLocation,contractorName,contractorNumber,status,created_at,scoutedBy) VALUES (?,?,?, ?, ?, ?,?,?,?, ?, ?, ?,?,?)";
 exports.insertScoutUserQuery = "INSERT INTO scout_member (name,phoneNumber,email,address,position,password,created_at) VALUES (?,?,?,?,?,?,?)";
 exports.countScoutQuery = `select status, count(*) as count  from scout group BY status UNION ALL SELECT 'Total' AS status, COUNT(*) AS count FROM scout`;
 exports.updateUserProfileImage = `UPDATE user SET profileImage = ?, ProfileImageKey = ? WHERE id = ?`;
