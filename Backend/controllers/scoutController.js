@@ -16,9 +16,9 @@ const path = require("path");
 // ###################### Scout Start #######################################
 exports.scout = async (req, res) => {
   try {
-    console.log("req.body",req.body);
+    const {userId}=req.user;
     const {projectName,projectType,city,area,block,buildingType,
-      size,address,pinLocation,contractorName,contractorNumber} = req.body;
+      size,address,pinLocation,contractorName,contractorNumber,type} = req.body;
       
     // const {userId} = req.user;
     const currentDate = new Date();
@@ -26,10 +26,11 @@ exports.scout = async (req, res) => {
     const insertResult = await queryRunner(insertScoutQuery, [
       projectName,
       projectType,
+      
       city,
       area,
       block,
-      buildingType,
+      type,
       size,
       address,
       pinLocation,
@@ -37,10 +38,39 @@ exports.scout = async (req, res) => {
       contractorNumber,
       "Pending",
       currentDate,
+      userId
     ]);
     if (insertResult[0].affectedRows > 0) {
       const id = insertResult[0].insertId;
-
+      if (req.files.length > 0) {
+        for (const file of req.files) {
+          const insertFileResult = await queryRunner(
+            "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
+            [id, file.location, file.key]
+          );
+          if (insertFileResult[0].affectedRows <= 0) {
+            // If any file insertion fails, return an error response
+            return res.status(500).json({
+              statusCode: 500,
+              message: "Failed to Create Scout",
+            });
+          }
+          else{
+            return res.status(200).json({
+              statusCode: 200,
+              message: "Scout Created successfully",
+              id: id,
+            });
+          }
+        }
+      }
+      else{
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Scout Created successfully",
+          id: id,
+        });
+      }
       return res.status(200).json({
         statusCode: 200,
         message: "Scout Created successfully",
