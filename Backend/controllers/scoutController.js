@@ -12,6 +12,11 @@ const { queryRunner } = require("../helper/queryRunner.js");
 const fs = require("fs");
 const csv = require("csv-parser");
 const path = require("path");
+
+const { normalizeAreaName } = require("../helper/normalizeArea.js");
+const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
+const { calculateScore } = require("../helper/calculateScore.js");
+const { insertNotification } = require("../helper/insertNotification.js");
 // const normalizeAreaName = require("../helper/normalizeAreaName.js");
 // const { calculateScore } = require("../helper/calculateScore.js");
 // const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
@@ -88,52 +93,9 @@ const path = require("path");
 //     });
 //   }
 // };
-function normalizeAreaName(area){
-  // Convert to lowercase, trim whitespace, remove special characters, handle common abbreviations
-  return area.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[^\w\s]/gi, '');
-};
-function buildDynamicQuery (city, area, projectType, buildingType) {
-  let query = 'SELECT scoutMemberID, city, area, projectType, projectDomain  FROM sop WHERE 1=1';
-  let queryParams = [];
 
-  if (city) {
-    query += ' AND city LIKE ?';
-    queryParams.push(`%${city}%`);
-  }
-  if (area) {
-    query += ' AND area LIKE ?';
-    queryParams.push(`%${normalizeAreaName(area)}%`);
-  }
-  if (projectType) {
-    query += ' AND projectDomain LIKE ?';
-    queryParams.push(`%${projectType}%`);
-  }
-  if (buildingType) {
-    query += ' AND projectType LIKE ?';
-    queryParams.push(`%${buildingType}%`);
-  }
 
-  query += ' LIMIT 10'; // Adjust as needed
-  return { query, queryParams };
-};
-function calculateScore(sopRow, criteria) {
-  let score = 0;
 
-  // Exact match gives higher score
-  if (sopRow.city === criteria.city) score += 2;
-  if (sopRow.projectDomain === criteria.projectType) score += 2;
-  if (sopRow.projectType === criteria.buildingType) score += 2;
-  
-  // Partial match gives moderate score
-  if (sopRow.area.includes(criteria.area) || criteria.area.includes(sopRow.area)) {
-    score += 3;
-  } else if (sopRow.area.toLowerCase().includes(criteria.area.toLowerCase())) {
-    // Lower score for case-insensitive partial match
-    score += 1;
-  }
-
-  return score;
-};
 exports.scout = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -151,33 +113,28 @@ exports.scout = async (req, res) => {
       contractorNumber,
       type
     } = req.body;
-    // console.log("this is body",req.body)
+    
+    console.log("Request body:", req.body);
+
     const currentDate = new Date();
 
     // Normalize area value
     const normalizedArea = normalizeAreaName(area);
-    const { query, queryParams } = buildDynamicQuery(city, normalizedArea, projectType, buildingType??type);
+
+    // Build dynamic query
+    let { query, queryParams } = buildDynamicQuery(city, area, projectType, buildingType ?? type);
+    console.log("Dynamic query:", query, queryParams);
 
     // Query SOP table
     const sopResults = await queryRunner(query, queryParams);
+    console.log("SOP Results:", sopResults);
 
-    // Query SOP table with fuzzy matching for area names
-    // const sopQuery = `
-    //   SELECT scoutMemberID
-    //   FROM sop 
-    //   WHERE city = ? 
-    //     AND area LIKE ? 
-    //     AND projectDomain = ? 
-    //     AND projectType = ?
-    //   LIMIT 10`;  // Retrieve more rows to apply ranking
-    // console.log("this is query",city, `%${normalizedArea}%`, projectType, buildingType??type)
-    // const sopResults = await queryRunner(sopQuery, [city, `%${normalizedArea}%`, projectType, buildingType??type]);
-
+    // Initialize scout member IDs array
     let scoutMemberIDs = [];
 
     // Define criteria for scoring
     const criteria = { city, area: normalizedArea, projectType, buildingType };
-    console.log(sopResults[0])
+
     // Calculate scores for SOP rows
     sopResults[0].forEach(row => {
       row.score = calculateScore(row, criteria);
@@ -197,43 +154,42 @@ exports.scout = async (req, res) => {
     // Assign scout members to the scout
     const assignedTo = scoutMemberIDs.length > 0 ? scoutMemberIDs.join(',') : null;
 
-    // Insert scout data
-    let insertResult;
-    if (assignedTo) {
-     
-      const insertScoutQuery = `
-    INSERT INTO Scout (
-      projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-      contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)`;
-
-  insertResult = await queryRunner(insertScoutQuery, [
-    projectName, projectType, city, area, block, buildingType, size, address, pinLocation,
-    contractorName, contractorNumber, currentDate, currentDate, userId, assignedTo
-  ]);}
-    else{
-     
-      const insertScoutQuery = `
-    INSERT INTO scout (
-      projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-      contractorNumber, status, created_at, updated_at, scoutedBy
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?)`;
-
-  insertResult = await queryRunner(insertScoutQuery, [
-    projectName, projectType, city, area, block, buildingType??type, size, address, pinLocation,
-    contractorName, contractorNumber, currentDate, currentDate, userId
-  ]);}
+    // Construct insert query
+    let insertQuery;
     
+
+    if (assignedTo) {
+      insertQuery = `
+        INSERT INTO scout (
+          projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
+          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?)`;
+      queryParams = [projectName, projectType, city, area, block, buildingType, size, address, pinLocation,
+        contractorName, contractorNumber, currentDate, currentDate, userId, assignedTo, type];
+    } else {
+      insertQuery = `
+        INSERT INTO scout (
+          projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
+          contractorNumber, status, created_at, updated_at, scoutedBy, type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)`;
+      queryParams = [projectName, projectType, city, area, block, buildingType ?? type, size, address, pinLocation,
+        contractorName, contractorNumber, currentDate, currentDate, userId, type];
+    }
+
+    // Execute insert query
+    const insertResult = await queryRunner(insertQuery, queryParams);
+
+    // Check if the insertion was successful
     if (insertResult[0].affectedRows > 0) {
-      const id = insertResult[0].insertId;
-      console.log("this is id",id)
+      const scoutId = insertResult[0].insertId;
+      console.log("Inserted Scout ID:", scoutId);
 
       // Insert location files if any
       if (req.files.length > 0) {
         for (const file of req.files) {
           const insertFileResult = await queryRunner(
             "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
-            [id, file.location, file.key]
+            [scoutId, file.location, file.key]
           );
 
           if (insertFileResult.affectedRows <= 0) {
@@ -245,20 +201,31 @@ exports.scout = async (req, res) => {
         }
       }
 
+      // Insert notification for the user
+      const notificationInserted = await insertNotification(userId, `New location scouted - ${projectName}`, scoutId);
+
+      if (notificationInserted && assignedTo) {
+        const assignedToArray = assignedTo.split(",");
+        for (const assignedToId of assignedToArray) {
+          const result=await insertNotification(assignedToId, `New location Allotted - ${projectName}`, scoutId);
+          console.log("Notification Inserted:", result);
+        }
+      }
+      console.log("Notification Inserted:", notificationInserted);
       return res.status(200).json({
         statusCode: 200,
         message: "Scout Created successfully",
-        id: id,
       });
+      
     } else {
-      console.log("this is error")
       return res.status(500).json({
         statusCode: 500,
         message: "Failed to Create Scout",
       });
     }
-  } catch (error) {
-    console.log("error", error);
+   
+    } catch (error) {
+    console.log("Error:", error);
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Create Scout",
@@ -266,6 +233,7 @@ exports.scout = async (req, res) => {
     });
   }
 };
+
 
 
 // ###################### create Scout END #######################################
