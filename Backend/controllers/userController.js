@@ -102,7 +102,7 @@ exports.signIn = async function (req, res) {
       const id = selectResult[0][0].id;
 
       const token = jwt.sign({ email, id }, "11madklfnqo3393", {
-        expiresIn: "3h",
+        expiresIn: "7d",
       });
       return res.status(200).json({
         message: "SignIn successfully",
