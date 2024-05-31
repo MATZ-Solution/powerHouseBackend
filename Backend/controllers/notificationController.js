@@ -10,6 +10,7 @@ exports.getAllNotifications = async (req, res) => {
     try {
       const { userId } = req.user;
       const { page, limit,search } = req.query;
+      console.log(page,limit,search)
       // let isAllRead=false
         const offset = (page - 1) * limit;
         let query = `SELECT * FROM notifications WHERE userId = ?`;
@@ -34,9 +35,10 @@ exports.getAllNotifications = async (req, res) => {
                 isAllRead: isAllRead
             });
             } else {
-            res.status(404).json({
-                statusCode: 404,
+            res.status(200).json({
+                statusCode: 200,
                 message: "No Notifications found",
+                data:[],
                 isAllRead: isAllRead
             });
         }
