@@ -26,6 +26,7 @@ exports.createScoutUser = async function (req, res) {
   const { Name, phoneNumber, email, address, position, password } = req.body;
   const currentDate = new Date();
   try {
+    
     const selectResult = await queryRunner(
       selectQuery("scout_member", "phoneNumber"),
       [phoneNumber]

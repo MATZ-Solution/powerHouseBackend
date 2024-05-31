@@ -16,17 +16,29 @@ const path = require("path");
 // ###################### Scout Start #######################################
 exports.scout = async (req, res) => {
   try {
-    const {userId}=req.user;
-    const {projectName,projectType,city,area,block,buildingType,
-      size,address,pinLocation,contractorName,contractorNumber,type} = req.body;
-      
+    const { userId } = req.user;
+    const {
+      projectName,
+      projectType,
+      city,
+      area,
+      block,
+      buildingType,
+      size,
+      address,
+      pinLocation,
+      contractorName,
+      contractorNumber,
+      type,
+    } = req.body;
+
     // const {userId} = req.user;
     const currentDate = new Date();
 
     const insertResult = await queryRunner(insertScoutQuery, [
       projectName,
       projectType,
-      
+
       city,
       area,
       block,
@@ -38,7 +50,7 @@ exports.scout = async (req, res) => {
       contractorNumber,
       "Pending",
       currentDate,
-      userId
+      userId,
     ]);
     if (insertResult[0].affectedRows > 0) {
       const id = insertResult[0].insertId;
@@ -54,8 +66,7 @@ exports.scout = async (req, res) => {
               statusCode: 500,
               message: "Failed to Create Scout",
             });
-          }
-          else{
+          } else {
             return res.status(200).json({
               statusCode: 200,
               message: "Scout Created successfully",
@@ -63,8 +74,7 @@ exports.scout = async (req, res) => {
             });
           }
         }
-      }
-      else{
+      } else {
         return res.status(200).json({
           statusCode: 200,
           message: "Scout Created successfully",
@@ -82,7 +92,7 @@ exports.scout = async (req, res) => {
         .json({ statusCode: 500, message: "Failed to Create Scout " });
     }
   } catch (error) {
-    console.log("error",error);
+    console.log("error", error);
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Create Scout",
@@ -278,7 +288,7 @@ exports.AddArea = async (req, res) => {
 // ###################### Add CSV Area #######################################
 
 exports.AddAreaCSV = async (req, res) => {
-  console.log("this is city id", req.body.cityId)
+  console.log("this is city id", req.body.cityId);
   try {
     if (!req.file) {
       return res
@@ -317,7 +327,7 @@ exports.AddAreaCSV = async (req, res) => {
               [areaName]
             );
 
-            let query = "INSERT INTO area(cityId, AreaName) VALUES(?,?)"
+            let query = "INSERT INTO area(cityId, AreaName) VALUES(?,?)";
             if (selectResult[0].length === 0) {
               await queryRunner(query, [req.body.cityId, areaName]);
             }
@@ -342,7 +352,7 @@ exports.AddAreaCSV = async (req, res) => {
         }
       });
   } catch (error) {
-    console.log("this is error", err)
+    console.log("this is error", err);
     return res
       .status(500)
       .json({ message: "Failed to process file", error: error.message });
@@ -350,7 +360,6 @@ exports.AddAreaCSV = async (req, res) => {
 };
 
 // ###################### END #######################################
-
 
 // ###################### Add SubArea #######################################
 exports.AddSubArea = async (req, res) => {
@@ -388,7 +397,6 @@ exports.AddSubArea = async (req, res) => {
   }
 };
 // ###################### Add SubArea #######################################
-
 
 // ###################### Add CSV Area #######################################
 
@@ -431,7 +439,7 @@ exports.AddSubAreaCSV = async (req, res) => {
               [subAreaName]
             );
 
-            let query = "INSERT INTO subarea(areaId, subAreaName) VALUES(?,?)"
+            let query = "INSERT INTO subarea(areaId, subAreaName) VALUES(?,?)";
             if (selectResult[0].length === 0) {
               await queryRunner(query, [req.body.areaId, subAreaName]);
             }
@@ -456,7 +464,7 @@ exports.AddSubAreaCSV = async (req, res) => {
         }
       });
   } catch (error) {
-    console.log("this is error", err)
+    console.log("this is error", err);
     return res
       .status(500)
       .json({ message: "Failed to process file", error: error.message });
@@ -464,8 +472,6 @@ exports.AddSubAreaCSV = async (req, res) => {
 };
 
 // ###################### END #######################################
-
-
 
 // ###################### Get Cities start #######################################
 exports.getCities = async (req, res) => {
@@ -494,7 +500,7 @@ exports.getCities = async (req, res) => {
 exports.getAreas = async (req, res) => {
   try {
     const { cityId } = req.query;
-    console.log(cityId)
+    console.log(cityId);
     let cityArray = cityId.split(",");
     let selectResult;
     const placeholders = cityArray.map(() => "?").join(", ");
@@ -525,9 +531,9 @@ exports.getSubAreas = async (req, res) => {
     const { areaId } = req.query;
     let areaArray = areaId.split(",");
     let selectResult;
-      const placeholders = areaArray.map(() => "?").join(", ");
-      const getSubAreasQuery = `SELECT * FROM subarea WHERE areaId IN (${placeholders})`;
-      selectResult = await queryRunner(getSubAreasQuery, [...areaArray]);
+    const placeholders = areaArray.map(() => "?").join(", ");
+    const getSubAreasQuery = `SELECT * FROM subarea WHERE areaId IN (${placeholders})`;
+    selectResult = await queryRunner(getSubAreasQuery, [...areaArray]);
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
@@ -541,6 +547,49 @@ exports.getSubAreas = async (req, res) => {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Get Subarea list",
+      error: error.message,
+    });
+  }
+};
+// ###################### Get Sub Areas By id End #######################################
+
+// ###################### Get Sub Areas By id start #######################################
+exports.getLocations = async (req, res) => {
+  try {
+    let query = `SELECT 
+    scout.projectName,
+    scout.buildingType,
+    scout.city,
+    scout.address,
+    scout.contractorName,
+    scout.contractorNumber,
+    scout.assignedTo,
+    scout.scoutedBy,
+    SM1.name AS scouter,
+    GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo)) AS assignedToMember
+FROM
+    scout scout
+JOIN
+    scout_member SM1 ON SM1.id = scout.scoutedBy
+LEFT JOIN
+    scout_member SM2 ON FIND_IN_SET(SM2.id, scout.assignedTo)
+GROUP BY
+    scout.id`;
+    let selectResult = await queryRunner(query);
+     console.log("this is locations: ", selectResult)
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "No Location Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to get location",
       error: error.message,
     });
   }

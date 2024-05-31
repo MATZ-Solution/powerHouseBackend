@@ -24,6 +24,8 @@ router.get('/getCities', verifyToken , scoutController.getCities);
 // router.get('/getAreas', scoutController.getAreas);
 router.get('/getAreas', verifyToken , scoutController.getAreas);
 router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
+router.get('/getLocation', verifyToken , scoutController.getLocations);
+
 // router.get('/getSubAreas', scoutController.getSubAreas);
 
 
