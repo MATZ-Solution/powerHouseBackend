@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const userRoutes = require("./routes/userRoutes");
 const scoutRoutes = require("./routes/scoutRoutes");
 const MeetingMembersRoutes = require("./routes/meetingMembersRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const { getConnectionFromPool } = require("./config/connection");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -36,6 +37,7 @@ getConnectionFromPool();
 app.use("/", userRoutes);
 app.use("/scout", scoutRoutes);
 app.use("/MeetingMembers", MeetingMembersRoutes);
+app.use("/notify", notificationRoutes);
 
 
 server.listen(2300, () => {
