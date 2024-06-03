@@ -23,18 +23,18 @@ const { insertNotification } = require("../helper/insertNotification.js");
 // ###################### Scout Start #######################################
 // exports.scout = async (req, res) => {
 //   try {
-    
+
 //     const {userId}=req.user;
 //     const {projectName,projectType,city,area,block,buildingType,
 //       size,address,pinLocation,contractorName,contractorNumber,type} = req.body;
-      
+
 //     // const {userId} = req.user;
 //     const currentDate = new Date();
 
 //     const insertResult = await queryRunner(insertScoutQuery, [
 //       projectName,
 //       projectType,
-      
+
 //       city,
 //       area,
 //       block,
@@ -64,7 +64,7 @@ const { insertNotification } = require("../helper/insertNotification.js");
 //               message: "Failed to Create Scout",
 //             });
 //           }
-          
+
 //         }
 //       }
 //       else{
@@ -94,8 +94,6 @@ const { insertNotification } = require("../helper/insertNotification.js");
 //   }
 // };
 
-
-
 exports.scout = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -111,9 +109,9 @@ exports.scout = async (req, res) => {
       pinLocation,
       contractorName,
       contractorNumber,
-      type
+      type,
     } = req.body;
-    
+
     console.log("Request body:", req.body);
 
     const currentDate = new Date();
@@ -122,7 +120,12 @@ exports.scout = async (req, res) => {
     const normalizedArea = normalizeAreaName(area);
 
     // Build dynamic query
-    let { query, queryParams } = buildDynamicQuery(city, area, projectType, buildingType ?? type);
+    let { query, queryParams } = buildDynamicQuery(
+      city,
+      area,
+      projectType,
+      buildingType ?? type
+    );
     console.log("Dynamic query:", query, queryParams);
 
     // Query SOP table
@@ -136,7 +139,7 @@ exports.scout = async (req, res) => {
     const criteria = { city, area: normalizedArea, projectType, buildingType };
 
     // Calculate scores for SOP rows
-    sopResults[0].forEach(row => {
+    sopResults[0].forEach((row) => {
       row.score = calculateScore(row, criteria);
     });
 
@@ -147,16 +150,16 @@ exports.scout = async (req, res) => {
     const topThreeRows = sopResults[0].slice(0, 3);
 
     // Extract scoutMemberIDs from top three rows
-    topThreeRows.forEach(row => {
+    topThreeRows.forEach((row) => {
       scoutMemberIDs.push(row.scoutMemberID);
     });
 
     // Assign scout members to the scout
-    const assignedTo = scoutMemberIDs.length > 0 ? scoutMemberIDs.join(',') : null;
+    const assignedTo =
+      scoutMemberIDs.length > 0 ? scoutMemberIDs.join(",") : null;
 
     // Construct insert query
     let insertQuery;
-    
 
     if (assignedTo) {
       insertQuery = `
@@ -164,16 +167,47 @@ exports.scout = async (req, res) => {
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
           contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?)`;
-      queryParams = [projectName, projectType, city, area, block, buildingType, size, address, pinLocation,
-        contractorName, contractorNumber, currentDate, currentDate, userId, assignedTo, type];
+      queryParams = [
+        projectName,
+        projectType,
+        city,
+        area,
+        block,
+        buildingType,
+        size,
+        address,
+        pinLocation,
+        contractorName,
+        contractorNumber,
+        currentDate,
+        currentDate,
+        userId,
+        assignedTo,
+        type,
+      ];
     } else {
       insertQuery = `
         INSERT INTO scout (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
           contractorNumber, status, created_at, updated_at, scoutedBy, type
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)`;
-      queryParams = [projectName, projectType, city, area, block, buildingType ?? type, size, address, pinLocation,
-        contractorName, contractorNumber, currentDate, currentDate, userId, type];
+      queryParams = [
+        projectName,
+        projectType,
+        city,
+        area,
+        block,
+        buildingType ?? type,
+        size,
+        address,
+        pinLocation,
+        contractorName,
+        contractorNumber,
+        currentDate,
+        currentDate,
+        userId,
+        type,
+      ];
     }
 
     // Execute insert query
@@ -202,12 +236,20 @@ exports.scout = async (req, res) => {
       }
 
       // Insert notification for the user
-      const notificationInserted = await insertNotification(userId, `New location scouted - ${projectName}`, scoutId);
+      const notificationInserted = await insertNotification(
+        userId,
+        `New location scouted - ${projectName}`,
+        scoutId
+      );
 
       if (notificationInserted && assignedTo) {
         const assignedToArray = assignedTo.split(",");
         for (const assignedToId of assignedToArray) {
-          const result=await insertNotification(assignedToId, `New location Allotted - ${projectName}`, scoutId);
+          const result = await insertNotification(
+            assignedToId,
+            `New location Allotted - ${projectName}`,
+            scoutId
+          );
           console.log("Notification Inserted:", result);
         }
       }
@@ -216,15 +258,13 @@ exports.scout = async (req, res) => {
         statusCode: 200,
         message: "Scout Created successfully",
       });
-      
     } else {
       return res.status(500).json({
         statusCode: 500,
         message: "Failed to Create Scout",
       });
     }
-   
-    } catch (error) {
+  } catch (error) {
     console.log("Error:", error);
     return res.status(500).json({
       statusCode: 500,
@@ -233,8 +273,6 @@ exports.scout = async (req, res) => {
     });
   }
 };
-
-
 
 // ###################### create Scout END #######################################
 
@@ -264,11 +302,11 @@ exports.getscouts = async (req, res) => {
 exports.getScoutByUserId = async (req, res) => {
   try {
     const { userId } = req.user;
-    const {limit}=req.query;
+    const { limit } = req.query;
     // sort by created at and also only select the records equal to the limit
     const selectResult = await queryRunner(
       `SELECT * FROM scout WHERE scoutedBy = ? ORDER BY created_at DESC LIMIT ?`,
-      [userId,parseInt(limit)]
+      [userId, parseInt(limit)]
     );
     if (selectResult[0].length > 0) {
       res.status(200).json({
@@ -717,9 +755,12 @@ exports.getSubAreas = async (req, res) => {
 // ###################### Get Sub Areas By id End #######################################
 
 // ###################### Get Sub Areas By id start #######################################
+
 exports.getLocations = async (req, res) => {
   try {
-    let query = `SELECT 
+    let query = `
+    SELECT 
+    scout.id,
     scout.projectName,
     scout.buildingType,
     scout.city,
@@ -729,17 +770,24 @@ exports.getLocations = async (req, res) => {
     scout.assignedTo,
     scout.scoutedBy,
     SM1.name AS scouter,
-    GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo)) AS assignedToMember
+    (
+        SELECT 
+            GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo))
+        FROM 
+            scout_member SM2 
+        WHERE 
+            FIND_IN_SET(SM2.id, scout.assignedTo)
+    ) AS assignedToMember
 FROM
     scout scout
 JOIN
     scout_member SM1 ON SM1.id = scout.scoutedBy
-LEFT JOIN
-    scout_member SM2 ON FIND_IN_SET(SM2.id, scout.assignedTo)
 GROUP BY
-    scout.id`;
+    scout.id
+`;
+
     let selectResult = await queryRunner(query);
-     console.log("this is locations: ", selectResult)
+    console.log("this is locations: ", selectResult);
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
@@ -756,5 +804,32 @@ GROUP BY
       error: error.message,
     });
   }
+};
+// ###################### Get Sub Areas By id End #######################################
+
+// ###################### Get Sub Areas By id start #######################################
+exports.addUnassignedScouter = async (req, res) => {
+  let { scoutID, projectID } = req.body;
+  let setScoutId = scoutID.join(',')
+
+    try {
+      let query = `UPDATE scout SET assignedTo = ? WHERE id = ?`
+     
+      let [selectResult] = await queryRunner(query,[setScoutId, projectID]);
+
+      if(selectResult.affectedRows>0){
+
+        return res.status(200).json({message: 'Successfully Assigned Scouter'})
+      }
+      res.status(500).json({message: 'Failed To Assigned Scouter'})
+      
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Add Scouter",
+        error: error.message,
+      });
+    }
 };
 // ###################### Get Sub Areas By id End #######################################
