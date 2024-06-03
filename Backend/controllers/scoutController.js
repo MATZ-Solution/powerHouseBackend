@@ -757,9 +757,26 @@ exports.getSubAreas = async (req, res) => {
 // ###################### Get Sub Areas By id start #######################################
 
 exports.getLocations = async (req, res) => {
+  console.log("this is req params", req.params.location);
+
   try {
-    let query = `
-    SELECT 
+    if (req.params.location === "UnAllocated Location") {
+      let query1 = `Select * FROM scout WHERE assignedTo IS NULL`;
+      let selectResult = await queryRunner(query1);
+      if (selectResult[0].length > 0) {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0],
+        });
+      } else {
+        res.status(404).json({ message: "No Location Found" });
+      }
+    }
+
+    if (req.params.location === "Alloted Location") {
+      let query = `
+      SELECT 
     scout.id,
     scout.projectName,
     scout.buildingType,
@@ -782,20 +799,25 @@ FROM
     scout scout
 JOIN
     scout_member SM1 ON SM1.id = scout.scoutedBy
+WHERE
+    scout.assignedTo IS NOT NULL
 GROUP BY
     scout.id
-`;
+HAVING
+    assignedToMember IS NOT NULL;
 
-    let selectResult = await queryRunner(query);
-    console.log("this is locations: ", selectResult);
-    if (selectResult[0].length > 0) {
-      res.status(200).json({
-        statusCode: 200,
-        message: "Success",
-        data: selectResult[0],
-      });
-    } else {
-      res.status(404).json({ message: "No Location Found" });
+      `;
+
+      let selectResult = await queryRunner(query);
+      if (selectResult[0].length > 0) {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0],
+        });
+      } else {
+        res.status(404).json({ message: "No Location Found" });
+      }
     }
   } catch (error) {
     return res.status(500).json({
@@ -810,26 +832,24 @@ GROUP BY
 // ###################### Get Sub Areas By id start #######################################
 exports.addUnassignedScouter = async (req, res) => {
   let { scoutID, projectID } = req.body;
-  let setScoutId = scoutID.join(',')
+  let setScoutId = scoutID.join(",");
 
-    try {
-      let query = `UPDATE scout SET assignedTo = ? WHERE id = ?`
-     
-      let [selectResult] = await queryRunner(query,[setScoutId, projectID]);
+  try {
+    let query = `UPDATE scout SET assignedTo = ? WHERE id = ?`;
 
-      if(selectResult.affectedRows>0){
+    let [selectResult] = await queryRunner(query, [setScoutId, projectID]);
 
-        return res.status(200).json({message: 'Successfully Assigned Scouter'})
-      }
-      res.status(500).json({message: 'Failed To Assigned Scouter'})
-      
-    } catch (error) {
-      console.log(error)
-      return res.status(500).json({
-        statusCode: 500,
-        message: "Failed to Add Scouter",
-        error: error.message,
-      });
+    if (selectResult.affectedRows > 0) {
+      return res.status(200).json({ message: "Successfully Assigned Scouter" });
     }
+    res.status(500).json({ message: "Failed To Assigned Scouter" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Add Scouter",
+      error: error.message,
+    });
+  }
 };
 // ###################### Get Sub Areas By id End #######################################

@@ -35,7 +35,7 @@ exports.createScoutUser = async function (req, res) {
     if (selectResult[0].length > 0) {
       return res.status(404).json({
         statusCode: 200,
-        message: `User already exists on this Number ${phoneNumber}`,
+        message: `User already exists on this phoneNumber ${phoneNumber}`,
       });
     }
 
