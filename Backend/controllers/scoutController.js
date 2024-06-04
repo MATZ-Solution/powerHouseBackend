@@ -121,6 +121,7 @@ exports.scout = async (req, res) => {
 
     // Build dynamic query
     let { query, queryParams } = buildDynamicQuery(
+      'SELECT scoutMemberID, city, area, projectType, projectDomain  FROM sop WHERE 1=1',
       city,
       area,
       projectType,
@@ -159,6 +160,9 @@ exports.scout = async (req, res) => {
       scoutMemberIDs.length > 0 ? scoutMemberIDs.join(",") : null;
 
     // Construct insert query
+    // refrence id should be alphanumeric like if type project than check for resedential or commercial (R-001,C-001) and then add refrence id accordingly if market add commercial only
+    let refrenceId = `${buildingType[0].toUpperCase()}-`;
+
     let insertQuery;
 
     if (assignedTo) {
@@ -184,6 +188,7 @@ exports.scout = async (req, res) => {
         userId,
         assignedTo,
         type,
+       
       ];
     } else {
       insertQuery = `
@@ -207,6 +212,7 @@ exports.scout = async (req, res) => {
         currentDate,
         userId,
         type,
+        
       ];
     }
 
@@ -216,8 +222,20 @@ exports.scout = async (req, res) => {
     // Check if the insertion was successful
     if (insertResult[0].affectedRows > 0) {
       const scoutId = insertResult[0].insertId;
-      console.log("Inserted Scout ID:", scoutId);
-
+      refrenceId += scoutId;
+      const updateRefrenceIdQuery = `UPDATE scout SET refrenceId = ? WHERE id = ?`;
+      const updateRefrenceIdResult = await queryRunner(updateRefrenceIdQuery, [
+        refrenceId,
+        scoutId,
+      ]);
+      if(updateRefrenceIdResult[0].affectedRows <= 0){
+        const deleteQuery = `DELETE FROM scout WHERE id = ?`;
+        await queryRunner(deleteQuery, [scoutId]);
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to Create Scout",
+        });
+      }
       // Insert location files if any
       if (req.files.length > 0) {
         for (const file of req.files) {

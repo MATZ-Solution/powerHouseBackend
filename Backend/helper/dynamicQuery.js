@@ -1,11 +1,11 @@
 const { normalizeAreaName } = require("./normalizeArea");
 
-exports.buildDynamicQuery= (city, area, projectType, buildingType)=> {
-    let query = 'SELECT scoutMemberID, city, area, projectType, projectDomain  FROM sop WHERE 1=1';
+exports.buildDynamicQuery= (query,city, area, projectType, buildingType,projectDomain)=> {
+    // let  = 'SELECT scoutMemberID, city, area, projectType, projectDomain  FROM sop WHERE 1=1';
     let queryParams = [];
   
     if (city) {
-      query += ' AND city LIKE ?';
+      query += ' AND LOWER(city) LIKE LOWER(?)';
       queryParams.push(`%${city}%`);
     }
    if (area) {
@@ -22,7 +22,10 @@ exports.buildDynamicQuery= (city, area, projectType, buildingType)=> {
       query += ' AND projectDomain LIKE ?';
       queryParams.push(`%${buildingType}%`);
     }
-  
+    if(projectDomain){
+        query += ' AND buildingType LIKE ?';
+        queryParams.push(`%${projectDomain}%`);
+    }
     query += ' LIMIT 10'; // Adjust as needed
     return { query, queryParams };
   };

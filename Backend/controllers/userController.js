@@ -19,6 +19,8 @@ const { queryRunner } = require("../helper/queryRunner");
 // const userServices = require("../Services/userServices");
 const imageUploads = require("./../middleware/imageUploads");
 const { log } = require("console");
+const { normalizeAreaName } = require("../helper/normalizeArea.js");
+const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
 const config = process.env;
 
 // ###################### user Create #######################################
@@ -375,12 +377,14 @@ exports.resendCode = async (req, res) => {
 // ###################### Create SOP #######################################
 exports.createSOP = async (req, res) => {
   const { userIds, projectType, cityId, areasId, projectDomain } = req.body;
+  console.log(req.body);
+
   try {
     let user = userIds.join(",");
     let area = areasId.join(",");
 
     let insertQuery =
-      "INSERT INTO sop(city,area,projectType,projectDomain,scoutMemberID) VALUES (?,?,?,?,?)";
+      "INSERT INTO sop(city, area, projectType, projectDomain, scoutMemberID) VALUES (?, ?, ?, ?, ?)";
     const insertSOP = await queryRunner(insertQuery, [
       cityId,
       area,
@@ -388,10 +392,54 @@ exports.createSOP = async (req, res) => {
       projectDomain,
       user,
     ]);
+
     if (insertSOP[0].affectedRows > 0) {
+      const normalizedArea = normalizeAreaName(area);
+      let noScoutFound = true;
+
+      for (const areaId of areasId) {
+        let { query, queryParams } = buildDynamicQuery(
+          "SELECT * FROM scout WHERE 1=1",
+          cityId,
+          areaId,
+          projectType,
+          null,
+          projectDomain ?? null
+        );
+
+        const scoutResult = await queryRunner(query, queryParams);
+        console.log("Scouts found:", scoutResult[0]);
+
+        if (scoutResult[0].length > 0) {
+          noScoutFound = false;
+
+          await Promise.all(
+            scoutResult[0].map(async (scout) => {
+              const result = await queryRunner(
+                "UPDATE scout SET assignedTo=? WHERE id=?",
+                [user, scout.id]
+              );
+
+              if (result[0].affectedRows > 0) {
+                console.log("Scout assigned successfully");
+              }
+            })
+          );
+        }
+      }
+
+      if (noScoutFound) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Sop added successfully but no scout found for these areas",
+        });
+      }
+
       return res.status(200).json({
-        message: "SOP added successfully",
+        statusCode: 200,
+        message: "Sop added and scouts assigned successfully",
       });
+
     } else {
       return res.status(500).json({
         statusCode: 500,
@@ -399,10 +447,13 @@ exports.createSOP = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
       statusCode: 500,
-      message: "Failed to to add SOP",
-      error: error.message,
+      message: "Failed to add SOP",
+      error: err.message,
     });
   }
 };
+
+
