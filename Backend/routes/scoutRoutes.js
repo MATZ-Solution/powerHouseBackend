@@ -10,24 +10,25 @@ const s3Upload = require('../middleware/s3Upload');
 
 // router.post("/scouts", verifyToken , jobController.Job); 
 router.post("/scout", verifyToken,s3Upload.array('files', 5) , scoutController.scout); 
-router.get("/getscouts", verifyToken , scoutController.getscouts);
-router.get('/getScoutsByUserId', verifyToken , scoutController.getScoutByUserId);
-router.get("/countScout", verifyToken , scoutController.countScout);
 router.post('/AddCity', verifyToken , scoutController.AddCity);
 router.post('/AddCityCSV', verifyToken , uploadCSV.single('file'), scoutController.AddCityCSV);
 router.post('/AddArea', verifyToken , scoutController.AddArea);
 router.post('/AddAreaCSV', verifyToken , uploadCSV.single('file'), scoutController.AddAreaCSV);
 router.post('/AddSubArea', verifyToken , scoutController.AddSubArea);
-
+router.post('/addUnassignedScouter', verifyToken , scoutController.addUnassignedScouter);
 router.post('/AddSubAreaCSV', verifyToken , uploadCSV.single('file'), scoutController.AddSubAreaCSV);
 
-router.get('/getCities', verifyToken , scoutController.getCities);
 // router.get('/getAreas', scoutController.getAreas);
+router.get("/getscouts", verifyToken , scoutController.getscouts);
+router.get('/getScoutsByUserId', verifyToken , scoutController.getScoutByUserId);
+router.get("/countScout", verifyToken , scoutController.countScout);
+router.get('/getCities', verifyToken , scoutController.getCities);
 router.get('/getAreas', verifyToken , scoutController.getAreas);
 router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
 router.get('/getLocation/:location', verifyToken , scoutController.getLocations);
+router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
 
-router.post('/addUnassignedScouter', verifyToken , scoutController.addUnassignedScouter);
+
 
 // router.get('/getSubAreas', scoutController.getSubAreas);
 

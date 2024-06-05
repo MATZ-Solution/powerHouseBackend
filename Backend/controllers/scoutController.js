@@ -872,3 +872,32 @@ exports.addUnassignedScouter = async (req, res) => {
   }
 };
 // ###################### Get Sub Areas By id End #######################################
+
+
+// ###################### Get Individual scout Member #######################################
+exports.getSingleScoutMember = async (req, res) => {
+  let { userID } = req.params;
+  console.log("this is userId", userID)
+
+  try {
+
+    const query = `SELECT email, phoneNumber, name, address, position FROM scout_member where id = ?`;
+    let selectResult = await queryRunner(query, [userID]);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "No user data Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to User Data",
+      error: error.message,
+    });
+  }
+};
+// ###################### Get Sub Areas By id End #######################################
