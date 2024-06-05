@@ -19,7 +19,13 @@ exports.deleteQuery = (table, ...field) => {
 
 exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area,block,buildingType,size,address,pinLocation,contractorName,contractorNumber,status,created_at,scoutedBy) VALUES (?,?,?, ?, ?, ?,?,?,?, ?, ?, ?,?,?)";
 exports.insertScoutUserQuery = "INSERT INTO scout_member (name,phoneNumber,email,address,position,password,created_at) VALUES (?,?,?,?,?,?,?)";
-exports.countScoutQuery = `select status, count(*) as count  from scout group BY status UNION ALL SELECT 'Total' AS status, COUNT(*) AS count FROM scout`;
+exports.countScoutQuery = `
+Select COUNT(*)as total,
+(select count(*) from scout where status = 'Pending') as pending,
+(select count(*) from scout where status = 'Reject') as rejected,
+(select count(*) from scout where status = 'Success') as success
+ from scout
+`;
 exports.updateUserProfileImage = `UPDATE user SET profileImage = ?, ProfileImageKey = ? WHERE id = ?`;
 exports.insertCityQuery = "INSERT INTO city (cityName) VALUES (?)";
 exports.insertAreaQuery = "INSERT INTO area (cityId,areaName) VALUES (?,?)";

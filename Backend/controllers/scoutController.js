@@ -350,6 +350,7 @@ exports.countScout = async (req, res) => {
   try {
     // const { userId } = req.user;
     const selectResult = await queryRunner(countScoutQuery);
+    console.log("this is count api", selectResult[0])
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
