@@ -21,6 +21,7 @@ const imageUploads = require("./../middleware/imageUploads");
 const { log } = require("console");
 const { normalizeAreaName } = require("../helper/normalizeArea.js");
 const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
+const { insertNotification } = require("../helper/insertNotification.js");
 const config = process.env;
 
 // ###################### user Create #######################################
@@ -415,14 +416,55 @@ exports.createSOP = async (req, res) => {
 
           await Promise.all(
             scoutResult[0].map(async (scout) => {
-              const result = await queryRunner(
-                "UPDATE scout SET assignedTo=? WHERE id=?",
-                [user, scout.id]
-              );
+              // const result = await queryRunner(
+              //   "UPDATE scout SET assignedTo=? WHERE id=?",
+              //   [user, scout.id]
+              // );
 
-              if (result[0].affectedRows > 0) {
-                console.log("Scout assigned successfully");
+              // if (result[0].affectedRows > 0) {
+              //   console.log("Scout assigned successfully");
+              //   await Promise.all(
+              //     userIds.map(async (userId) => {
+              //       const insertNotificationResult = await insertNotification(
+              //         userId,
+              //         `New location Allotted - ${scout.projectName}`,
+              //         scout.id
+              //       );
+              //       if (insertNotificationResult) {
+              //         console.log("Notification added successfully");
+              //       }
+              //     })
+              //   );
+              // }
+              try {
+                const result = await queryRunner(
+                  "UPDATE scout SET assignedTo=? WHERE id=?",
+                  [user, scout.id]
+                );
+
+                if (result[0].affectedRows > 0) {
+                  console.log("Scout assigned successfully");
+                  await Promise.all(
+                    userIds.map(async (userId) => {
+                      try {
+                        const insertNotificationResult = await insertNotification(
+                          userId,
+                          `New location Allotted - ${scout.projectName}`,
+                          scout.id
+                        );
+                        if (insertNotificationResult) {
+                          console.log("Notification added successfully");
+                        }
+                      } catch (notificationErr) {
+                        console.error("Error adding notification:", notificationErr);
+                      }
+                    })
+                  );
+                }
+              } catch (updateErr) {
+                console.error("Error updating scout:", updateErr);
               }
+
             })
           );
         }
@@ -434,7 +476,7 @@ exports.createSOP = async (req, res) => {
           message: "Sop added successfully but no scout found for these areas",
         });
       }
-
+      
       return res.status(200).json({
         statusCode: 200,
         message: "Sop added and scouts assigned successfully",

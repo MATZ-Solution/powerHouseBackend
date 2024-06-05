@@ -44,29 +44,108 @@ const {
     }
   };
   // ###################### create Meeting Members END #######################################
-  
-  // ###################### Get Scout data start #######################################
-  exports.getscouts = async (req, res) => {
+
+  exports.addMeeting= async (req, res)=> {
     try {
-      // const { userId } = req.user;
-      const selectResult = await queryRunner(selectQuery("scout"));
-      if (selectResult[0].length > 0) {
-        
-        res.status(200).json({
-          statusCode: 200,
-          message: "Success",
-          data: selectResult[0]
-        });
-      } else {
-        res.status(404).json({ message: "Scout Data Not Found" });
-      }
+      const {
+        locationId,
+        assignedTo
+    } = req.body;
+    const checkAlreadyExist = await queryRunner(selectQuery("meetings","locationId"),[locationId]);
+    if (checkAlreadyExist[0].length > 0) {
+      return res.status(409).json({
+        statusCode: 409,
+        message: `Meeting already exist on this location ${locationId}`,
+      });
+    }
+    const insertQuery = `INSERT INTO meetings (locationId,assignedTo) VALUES (?,?)`;
+    const insertResult = await queryRunner(insertQuery, [locationId,assignedTo]);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Meeting Created successfully",
+        id: insertResult[0].insertId,
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Create Meeting",
+      });
+    }
     } catch (error) {
       return res.status(500).json({
         statusCode : 500,
-        message: "Failed to Get Scout Data",
+        message: "Failed to Create Meeting Members",
         error: error.message
       });
     }
-  };
-  // ###################### Get Scout data End #######################################
-  
+  }
+  exports.updateMeetingLogs = async (req, res)=> {
+    try {
+      const {
+        meetingLogId,
+        meetingId,
+        startTime,
+        endTime,
+        inProgress,
+        meetingNotes,
+        members,
+        startedBy
+    } = req.body;
+
+    //  if start time is available then insert in meeting logs
+    if(startTime){
+      const insertQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,startedBy) VALUES (?,?,?,?)`;
+      const insertResult = await queryRunner(insertQuery, [meetingId,startTime,members,startedBy]);
+      if (insertResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Meeting Logs Created successfully",
+          id: insertResult[0].insertId,
+        });
+      } else {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to Create Meeting Logs",
+        });
+      }
+
+    }
+    // now if meetingLogId is available then update the meeting logs
+    if(meetingLogId){
+      // make a dynamic query to update the meeting logs
+      let updateQuery = `UPDATE meeting_logs SET `;
+      if(endTime){
+        updateQuery += `endTime = '${endTime}',`;
+      }
+      if(inProgress){
+        updateQuery += `inProgress = '${inProgress}',`;
+      }
+      if(meetingNotes){
+        updateQuery += `meetingNotes = '${meetingNotes}'`;
+      }
+      updateQuery += ` WHERE meetingLogId = ${meetingLogId}`;
+      const updateResult = await queryRunner(updateQuery);
+      if (updateResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Meeting Logs Updated successfully",
+          id: meetingLogId,
+        });
+      } else {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to Update Meeting Logs",
+        });
+      }
+
+    }
+
+    } catch (error) {
+      return res.status(500).json({
+        statusCode : 500,
+        message: "Failed to Update Meeting Logs",
+        error: error.message
+      });
+    }
+  }
