@@ -28,6 +28,8 @@ router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
 router.get('/getLocation/:location', verifyToken , scoutController.getLocations);
 router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
 
+router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
+
 
 
 // router.get('/getSubAreas', scoutController.getSubAreas);
