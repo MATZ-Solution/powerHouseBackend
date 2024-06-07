@@ -82,7 +82,7 @@ exports.createScoutUser = async function (req, res) {
 
 // ###################### SignIn user start #######################################
 exports.signIn = async function (req, res) {
-  console.log(req.body);
+  // console.log(req.body);
   const { email, password } = req.body;
   try {
     let table;
@@ -94,7 +94,7 @@ exports.signIn = async function (req, res) {
       table = "scout_member";
       column = "phoneNumber";
     }
-    console.log(table, column);
+    // console.log(table, column);
     const selectResult = await queryRunner(selectQuery(table, column), [email]);
     if (selectResult[0].length === 0) {
       console.log("Email not found");
@@ -280,9 +280,9 @@ exports.verifyResetEmailCode = async (req, res) => {
       const now2 = new Date();
       const formattedDate = now2.toISOString().slice(0, 19).replace("T", " ");
       const time = new Date(formattedDate) - now;
-      console.log(time);
+      // console.log(time);
       const time2 = time / 1000;
-      console.log(time2);
+      // console.log(time2);
       if (time2 >= 120) {
         res.status(200).json({
           message: "Time out",
@@ -378,7 +378,7 @@ exports.resendCode = async (req, res) => {
 // ###################### Create SOP #######################################
 exports.createSOP = async (req, res) => {
   const { userIds, projectType, cityId, areasId, projectDomain } = req.body;
-  console.log(req.body);
+  // console.log(req.body);
 
   try {
     let user = userIds.join(",");
@@ -409,7 +409,7 @@ exports.createSOP = async (req, res) => {
         );
 
         const scoutResult = await queryRunner(query, queryParams);
-        console.log("Scouts found:", scoutResult[0]);
+        // console.log("Scouts found:", scoutResult[0]);
 
         if (scoutResult[0].length > 0) {
           noScoutFound = false;
@@ -443,7 +443,7 @@ exports.createSOP = async (req, res) => {
                 );
 
                 if (result[0].affectedRows > 0) {
-                  console.log("Scout assigned successfully");
+                  // console.log("Scout assigned successfully");
                   await Promise.all(
                     userIds.map(async (userId) => {
                       try {
@@ -453,7 +453,7 @@ exports.createSOP = async (req, res) => {
                           scout.id
                         );
                         if (insertNotificationResult) {
-                          console.log("Notification added successfully");
+                          // console.log("Notification added successfully");
                         }
                       } catch (notificationErr) {
                         console.error("Error adding notification:", notificationErr);

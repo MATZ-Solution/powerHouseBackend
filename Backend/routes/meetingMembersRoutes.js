@@ -8,6 +8,10 @@ const { uploads } = require("../middleware/imageUploads");
 // router.post("/scouts", verifyToken , jobController.Job); 
 // router.post("/createMeetingMembers", verifyToken , meetingMembersController.createMeetingMembers ); 
 router.post("/createMeetingMembers", verifyToken ,meetingMembersController.createMeetingMembers ); 
+router.post('/addMeeting', verifyToken, meetingMembersController.addMeeting);
+router.put('/updateMeeting', verifyToken, meetingMembersController.updateMeetingLogs);
+router.get('/getMeetings', verifyToken, meetingMembersController.getMeetingLogsByDate);
+router.get('/getMeetings/:id', verifyToken, meetingMembersController.getMeetingLogsById);
 // router.get("/getscouts", verifyToken , scoutController.getscouts);
 
 

@@ -15,7 +15,7 @@ exports.insertNotification = async (user_id,
         
                 ]
             )
-            console.log(insertResult[0].affectedRows)
+            // console.log(insertResult[0].affectedRows)
             if(insertResult[0].affectedRows>0){
                 return true
             }else{
@@ -35,7 +35,7 @@ exports.insertNotification = async (user_id,
     
             ]
         )
-        console.log(insertResult[0].affectedRows)
+        // console.log(insertResult[0].affectedRows)
 
         if(insertResult[0].affectedRows>0){
             return true
