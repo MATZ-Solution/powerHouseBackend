@@ -121,7 +121,7 @@ exports.scout = async (req, res) => {
 
     // Build dynamic query
     let { query, queryParams } = buildDynamicQuery(
-      'SELECT scoutMemberID, city, area, projectType, projectDomain  FROM sop WHERE 1=1',
+      "SELECT scoutMemberID, city, area, projectType, projectDomain  FROM sop WHERE 1=1",
       city,
       area,
       projectType,
@@ -188,7 +188,6 @@ exports.scout = async (req, res) => {
         userId,
         assignedTo,
         type,
-       
       ];
     } else {
       insertQuery = `
@@ -212,7 +211,6 @@ exports.scout = async (req, res) => {
         currentDate,
         userId,
         type,
-        
       ];
     }
 
@@ -228,7 +226,7 @@ exports.scout = async (req, res) => {
         refrenceId,
         scoutId,
       ]);
-      if(updateRefrenceIdResult[0].affectedRows <= 0){
+      if (updateRefrenceIdResult[0].affectedRows <= 0) {
         const deleteQuery = `DELETE FROM scout WHERE id = ?`;
         await queryRunner(deleteQuery, [scoutId]);
         return res.status(500).json({
@@ -350,7 +348,7 @@ exports.countScout = async (req, res) => {
   try {
     // const { userId } = req.user;
     const selectResult = await queryRunner(countScoutQuery);
-    console.log("this is count api", selectResult[0])
+    console.log("this is count api", selectResult[0]);
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
@@ -872,3 +870,68 @@ exports.addUnassignedScouter = async (req, res) => {
   }
 };
 // ###################### Get Sub Areas By id End #######################################
+
+// ###################### Get Individual scout Member #######################################
+exports.getSingleScoutMember = async (req, res) => {
+  let { userID } = req.params;
+  console.log("this is userId", userID);
+
+  try {
+    const query = `SELECT email, phoneNumber, name, address, position FROM scout_member where id = ?`;
+    let selectResult = await queryRunner(query, [userID]);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "No user data Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to User Data",
+      error: error.message,
+    });
+  }
+};
+// ###################### UPDATE SCOUTE MEMBER #######################################
+
+exports.updateScoutMember = async (req, res) => {
+  let { Name, address, email, phoneNumber, position, userID } = req.body;
+  console.log("this is req.body", req.body);
+
+  try {
+    const query = `UPDATE scout_member SET name = ?, address = ?, email = ?, phoneNumber = ?, position= ?  where id = ?; `;
+    let insertResult = await queryRunner(query, [
+      Name,
+      address,
+      email,
+      phoneNumber,
+      position,
+      userID,
+    ]);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Successfully Update User",
+        id: insertResult[0].insertId,
+      });
+    } else {
+      return res
+        .status(500)
+        .json({
+          statusCode: 500,
+          message: "Failed to Update User",
+        });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+// ###################### UPDATE SCOUTE MEMBER End #######################################

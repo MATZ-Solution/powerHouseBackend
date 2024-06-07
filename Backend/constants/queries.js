@@ -21,9 +21,9 @@ exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area
 exports.insertScoutUserQuery = "INSERT INTO scout_member (name,phoneNumber,email,address,position,password,created_at) VALUES (?,?,?,?,?,?,?)";
 exports.countScoutQuery = `
 Select COUNT(*)as total,
-(select count(*) from scout where status = 'Pending') as pending,
-(select count(*) from scout where status = 'Reject') as rejected,
-(select count(*) from scout where status = 'Success') as success
+(select count(*) from scout_member) as user,
+(select count(*) FROM scout WHERE assignedTo IS NULL) as UnAllotedLocation,
+(select count(*) FROM scout WHERE assignedTo IS NOT NULL) as AllotedLocation
  from scout
 `;
 exports.updateUserProfileImage = `UPDATE user SET profileImage = ?, ProfileImageKey = ? WHERE id = ?`;
