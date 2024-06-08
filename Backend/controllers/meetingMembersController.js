@@ -125,12 +125,12 @@ const {
       }
       if(endTime){
         updateQuery += `endTime = '${endTime}',`;
-        updateQuery += `inProgress = '${inProgress??0}',`;
+        updateQuery += `inProgress = '${inProgress??0}'`;
 
       }
       
       if(meetingNotes){
-        updateQuery += `meetingNotes = '${meetingNotes}'`;
+        updateQuery += `,meetingNotes = '${meetingNotes}'`;
       }
       updateQuery += ` WHERE id = ${meetingLogId}`;
       const updateResult = await queryRunner(updateQuery);
@@ -193,7 +193,8 @@ const {
           scout.projectName, 
           scout.address, 
           scout.contractorName, 
-          scout.contractorNumber 
+          scout.contractorNumber,
+          scout.pinLocation
       FROM 
           meetings 
       JOIN 
@@ -204,13 +205,18 @@ const {
   
 
       const selectMeetingResult = await queryRunner(selectMeetingQuery, [userId]);
-      // console.log(selectMeetingResult[0]);
+      let anyMeetingInProgress = false;
       if (selectMeetingResult[0].length > 0) {
         const meetingLogs = await Promise.all(selectMeetingResult[0].map(async (meeting) => {
+          // in the below query we have to include a meetingInProgress variable if any meeting in all the meetings is in progress
           const meetingLogQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? AND DATE(startTime) = ?`;
           const meetingLogResult = await queryRunner(meetingLogQuery, [meeting.id, date]);
           if (meetingLogResult[0].length > 0) {
           return meetingLogResult[0].map(log => {
+            if (log.inProgress === 1) {
+              anyMeetingInProgress = true;
+            }
+
             return {
               meetingId: meeting.id,
               locationId: meeting.locationId,
@@ -218,6 +224,8 @@ const {
               address: meeting.address,
               contractorName: meeting.contractorName,
               contractorNumber: meeting.contractorNumber,
+              longitude: meeting.pinLocation.split(",")[1],
+              latitude: meeting.pinLocation.split(",")[0],
               log: log,
             };
           });
@@ -228,11 +236,13 @@ const {
         
         // Filter out null values from the meetingLogs
         const filteredMeetingLogs = meetingLogs.filter(logs => logs !== null);
+        console.log('sdsddsdsd',filteredMeetingLogs);
         // console.log(filteredMeetingLogs.flatMap(logs => logs));
         return res.status(200).json({
           statusCode: 200,
           message: "Meeting Logs",
           data: filteredMeetingLogs.flatMap(logs => logs),
+          meetingInProgress: anyMeetingInProgress,
         });
       } else {
         return res.status(404).json({
@@ -263,7 +273,8 @@ const {
           scout.projectName, 
           scout.address, 
           scout.contractorName, 
-          scout.contractorNumber 
+          scout.contractorNumber,
+          scout.pinLocation
       FROM 
           meetings 
       JOIN 
@@ -287,6 +298,8 @@ const {
           address: selectMeetingResult[0][0].address,
           contractorName: selectMeetingResult[0][0].contractorName,
           contractorNumber: selectMeetingResult[0][0].contractorNumber,
+          longitude: selectMeetingResult[0][0].pinLocation.split(",")[1],
+          latitude: selectMeetingResult[0][0].pinLocation.split(",")[0],
           log: meetingLogResult[0][0],
         },
       });

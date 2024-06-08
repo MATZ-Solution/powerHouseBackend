@@ -1,7 +1,7 @@
 // config.js
 module.exports = {
     
-    bucketName: 'vertualcloudcallcenter',
+    bucketName: 'powerhouseassets',
     
     awsAccessKeyId: "AKIAQPZG37TRU4ABDSXN",
     awsSecretAccessKey: "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",
