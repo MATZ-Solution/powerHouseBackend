@@ -121,7 +121,7 @@ const {
       if(startTime){
         updateQuery += `startTime = '${startTime}',`;
         updateQuery += `inProgress = '${inProgress??1}',`;
-        updateQuery += `startedBy = '${userId}',`;
+        updateQuery += `startedBy = '${userId}'`;
       }
       if(endTime){
         updateQuery += `endTime = '${endTime}',`;
