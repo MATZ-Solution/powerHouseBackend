@@ -10,9 +10,9 @@ imageToDelete = (fileNames) => {
     if (fs.existsSync(imagePath)) {
       // Delete the image file
       fs.unlinkSync(imagePath);
-      console.log(`Deleted image: ${fileName}`);
+      // console.log(`Deleted image: ${fileName}`);
     } else {
-      console.log(`Image not found: ${fileName}`);
+      // console.log(`Image not found: ${fileName}`);
     }
   });
 }
