@@ -149,3 +149,31 @@ const {
       });
     }
   }
+
+
+  exports.getMeetings= async (req, res) => {
+  
+    try {
+      const query = `SELECT l.id, l.locationId, l.assignedTo , s.address, s.projectName,
+      (SELECT group_concat(sm.name) from scout_member sm where find_in_set(sm.id, l.assignedTo)) As assignedToMemberName
+      FROM meetings l 
+      JOIN scout s
+      ON l.locationId = s.id;`;
+      let selectResult = await queryRunner(query);
+      if (selectResult[0].length > 0) {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0],
+        });
+      } else {
+        res.status(404).json({ message: "No Meetings Found" });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Internal Server Error",
+        error: error.message,
+      });
+    }
+  };

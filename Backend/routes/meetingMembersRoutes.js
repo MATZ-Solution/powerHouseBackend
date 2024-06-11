@@ -9,6 +9,7 @@ const { uploads } = require("../middleware/imageUploads");
 // router.post("/createMeetingMembers", verifyToken , meetingMembersController.createMeetingMembers ); 
 router.post("/createMeetingMembers", verifyToken ,meetingMembersController.createMeetingMembers ); 
 // router.get("/getscouts", verifyToken , scoutController.getscouts);
+router.get("/getMeeting", verifyToken ,meetingMembersController.getMeetings ); 
 
 
 module.exports = router; 

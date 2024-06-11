@@ -296,7 +296,12 @@ exports.scout = async (req, res) => {
 exports.getscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    const selectResult = await queryRunner(selectQuery("scout"));
+    let query = `SELECT s.id, s.projectType, s.projectName, s.address, s.contractorName, s.contractorNumber, s.refrenceId,s.scoutedBy, sm.name as scoutedBy
+    FROM scout s
+    JOIN scout_member sm
+    ON s.scoutedBy = sm.id;`
+
+    const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
@@ -774,11 +779,15 @@ exports.getSubAreas = async (req, res) => {
 // ###################### Get Sub Areas By id start #######################################
 
 exports.getLocations = async (req, res) => {
-  console.log("this is req params", req.params.location);
 
   try {
     if (req.params.location === "UnAllocated Location") {
-      let query1 = `Select * FROM scout WHERE assignedTo IS NULL`;
+      let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
+      FROM scout s
+      join scout_member sm 
+      on s.scoutedBy = sm.id
+      WHERE s.assignedTo IS NULL`;
+
       let selectResult = await queryRunner(query1);
       if (selectResult[0].length > 0) {
         res.status(200).json({
@@ -795,6 +804,7 @@ exports.getLocations = async (req, res) => {
       let query = `
       SELECT 
     scout.id,
+    scout.refrenceId,
     scout.projectName,
     scout.buildingType,
     scout.city,
@@ -877,8 +887,9 @@ exports.getSingleScoutMember = async (req, res) => {
   console.log("this is userId", userID);
 
   try {
-    const query = `SELECT email, phoneNumber, name, address, position FROM scout_member where id = ?`;
+    const query = `SELECT email, password, phoneNumber, name, address, position FROM scout_member where id = ?`;
     let selectResult = await queryRunner(query, [userID]);
+    // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
