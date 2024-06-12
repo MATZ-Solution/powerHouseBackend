@@ -13,6 +13,7 @@ router.put('/updateMeeting', verifyToken, meetingMembersController.updateMeeting
 router.get('/getMeetings', verifyToken, meetingMembersController.getMeetingLogsByDate);
 router.get('/getMeetings/:id', verifyToken, meetingMembersController.getMeetingLogsById);
 // router.get("/getscouts", verifyToken , scoutController.getscouts);
+router.get("/getMeeting", verifyToken ,meetingMembersController.getMeetings ); 
 
 
 module.exports = router; 
