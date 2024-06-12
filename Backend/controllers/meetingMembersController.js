@@ -240,62 +240,76 @@ where ml.meetingId = ?`;
   exports.getMeetingLogsByDate = async (req, res) => {
     try {
       const { userId } = req.user;
-      const { date } = req.query;
-  
-      // console.log(date);
-  
-      const selectMeetingQuery = `
-      SELECT 
-          meetings.id, 
-          meetings.locationId, 
-          scout.projectName, 
-          scout.address, 
-          scout.contractorName, 
-          scout.contractorNumber,
-          scout.pinLocation
-      FROM 
-          meetings 
-      JOIN 
-          scout ON meetings.locationId = scout.id 
-      WHERE 
-          FIND_IN_SET(?, meetings.assignedTo)
-  `;
-  
+      const { date, searchTerm,page=1,limit=3 } = req.query;
 
-      const selectMeetingResult = await queryRunner(selectMeetingQuery, [userId]);
+      const offset = (page - 1) * limit;
+
+  
+      // Construct the search condition
+      const searchCondition = searchTerm
+        ? `AND (scout.projectName LIKE ? OR scout.contractorName LIKE ? OR scout.address LIKE ?)`
+        : '';
+  
+      // Updated query with search functionality
+      const selectMeetingQuery = `
+        SELECT 
+            meetings.id, 
+            meetings.locationId, 
+            scout.projectName, 
+            scout.address, 
+            scout.contractorName, 
+            scout.contractorNumber,
+            scout.pinLocation
+        FROM 
+            meetings 
+        JOIN 
+            scout ON meetings.locationId = scout.id 
+        WHERE 
+            FIND_IN_SET(?, meetings.assignedTo)
+            ${searchCondition}
+      
+
+      `;
+  
+      // Build the parameters array
+      const params = [userId];
+      if (searchTerm) {
+        const likeSearchTerm = `%${searchTerm}%`;
+        params.push(likeSearchTerm, likeSearchTerm, likeSearchTerm);
+      }
+      console.log(params);
+      const selectMeetingResult = await queryRunner(selectMeetingQuery, params);
       let anyMeetingInProgress = false;
       if (selectMeetingResult[0].length > 0) {
         const meetingLogs = await Promise.all(selectMeetingResult[0].map(async (meeting) => {
-          // in the below query we have to include a meetingInProgress variable if any meeting in all the meetings is in progress
-          const meetingLogQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? AND DATE(startTime) = ?`;
-          const meetingLogResult = await queryRunner(meetingLogQuery, [meeting.id, date]);
+          // Query to get the meeting logs
+          const meetingLogQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? AND DATE(startTime) = ? ORDER BY startTime DESC LIMIT ? OFFSET ?`;
+          const meetingLogResult = await queryRunner(meetingLogQuery, [meeting.id, date,parseInt(limit), offset]);
           if (meetingLogResult[0].length > 0) {
-          return meetingLogResult[0].map(log => {
-            if (log.inProgress === 1) {
-              anyMeetingInProgress = true;
-            }
-
-            return {
-              meetingId: meeting.id,
-              locationId: meeting.locationId,
-              projectName: meeting.projectName,
-              address: meeting.address,
-              contractorName: meeting.contractorName,
-              contractorNumber: meeting.contractorNumber,
-              longitude: meeting.pinLocation.split(",")[1],
-              latitude: meeting.pinLocation.split(",")[0],
-              log: log,
-            };
-          });
-            
+            return meetingLogResult[0].map(log => {
+              if (log.inProgress === 1) {
+                anyMeetingInProgress = true;
+              }
+  
+              return {
+                meetingId: meeting.id,
+                locationId: meeting.locationId,
+                projectName: meeting.projectName,
+                address: meeting.address,
+                contractorName: meeting.contractorName,
+                contractorNumber: meeting.contractorNumber,
+                longitude: meeting.pinLocation.split(",")[1],
+                latitude: meeting.pinLocation.split(",")[0],
+                log: log,
+              };
+            });
           }
           return null; // Return null for meetings with no logs
         }));
         
         // Filter out null values from the meetingLogs
         const filteredMeetingLogs = meetingLogs.filter(logs => logs !== null);
-        console.log('sdsddsdsd',filteredMeetingLogs);
-        // console.log(filteredMeetingLogs.flatMap(logs => logs));
+  
         return res.status(200).json({
           statusCode: 200,
           message: "Meeting Logs",
@@ -317,6 +331,8 @@ where ml.meetingId = ?`;
       });
     }
   }
+  
+  
   exports.getMeetingLogsById = async (req, res) => {
     // in this i will send meetingId and meetinglogId and will get the specific meeting log
     try{
