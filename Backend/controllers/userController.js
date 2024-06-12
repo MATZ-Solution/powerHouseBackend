@@ -498,4 +498,58 @@ exports.createSOP = async (req, res) => {
   }
 };
 
-
+exports.getProfile = async (req, res) => {
+  const { userId } = req.user;
+  try {
+    const selectResult = await queryRunner(selectQuery("scout_member", "id"), [
+      userId,
+    ]);
+    if (selectResult[0].length > 0) {
+      // dont include password in response
+      delete selectResult[0][0].password;
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0][0],
+      });
+    } else {
+      res.status(404).json({ message: "User Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get User",
+      error: error.message,
+    });
+  }
+}
+exports.updateProfile = async (req, res) => {
+  const { userId } = req.user;
+  // const { Name, phoneNumber, email, address, position } = req.body;
+  try {
+    
+    let profileImage = null;
+    if (req.file) {
+      
+      profileImage = req.file.location;
+    }
+    const updateResult = await queryRunner(
+      "UPDATE scout_member SET picture=? WHERE id=?",
+      [profileImage, userId]
+    );
+    if (updateResult[0].affectedRows > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Profile Updated Successfully",
+      });
+    } else {
+      res.status(404).json({ message: "Profile Not Updated" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Update Profile",
+      error: error.message,
+    });
+  }
+}

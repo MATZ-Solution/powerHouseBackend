@@ -6,10 +6,12 @@ const {
   } = require("../constants/queries.js");
   const { queryRunner } = require("../helper/queryRunner.js");
 
-exports.getAllNotifications = async (req, res) => {
+  exports.getAllNotifications = async (req, res) => {
     try {
       const { userId } = req.user;
-      const { page, limit,search } = req.query;
+      let { page, limit,search } = req.query;
+      if(!page) page=1
+      if(!limit) limit=15
       console.log(page,limit,search)
       // let isAllRead=false
         const offset = (page - 1) * limit;
@@ -27,6 +29,7 @@ exports.getAllNotifications = async (req, res) => {
         const allReadResult = await queryRunner(allReadQuery, [userId]);
 
         const isAllRead = allReadResult[0][0].unreadCount === 0;
+        // console.log(selectResult[0].length,isAllRead)
         if (selectResult[0].length > 0) {
             res.status(200).json({
                 statusCode: 200,
@@ -43,6 +46,7 @@ exports.getAllNotifications = async (req, res) => {
             });
         }
     } catch (error) {
+      console.log(error)
       res.status(500).json({
         statusCode: 500,
         message: "Failed to get Notifications",
@@ -50,7 +54,10 @@ exports.getAllNotifications = async (req, res) => {
       });
     }
 }
+  
 
+
+  
 exports.markNotificationAsRead = async (req, res) => {
     try {
       const { userId } = req.user;

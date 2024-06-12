@@ -6,16 +6,17 @@ const { verifyToken } = require("../middleware/authenticate");
 const { uploads } = require("../middleware/imageUploads");
 const multer = require('multer');
 const upload = multer();
-
+const s3Upload = require('../middleware/s3Upload');
 router.post("/createScoutUser", userController.createScoutUser);
 router.post("/signIn", userController.signIn);
 router.post("/createSOP", verifyToken, userController.createSOP);
 
 router.get("/scoutsMember", verifyToken, userController.getScoutsMember);
 router.get("/protected", verifyToken, userController.getUser);
-
-
-
+router.get('/getProfile', verifyToken, userController.getProfile);
+router.put('/updateProfile', verifyToken,s3Upload.single(
+    'profile'
+) ,userController.updateProfile);
 
 // router.post("/sendEmail", userController.sendEmail);
 // router.post("/forgetPassword", userController.createResetEmail);
