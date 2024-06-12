@@ -298,7 +298,7 @@ exports.getscouts = async (req, res) => {
     // const { userId } = req.user;
     let query = `SELECT s.id, s.projectType, s.projectName, s.address, s.contractorName, s.contractorNumber, s.refrenceId,s.scoutedBy, sm.name as scoutedBy
     FROM scout s
-    JOIN scout_member sm
+    LEFT JOIN scout_member sm
     ON s.scoutedBy = sm.id;`
 
     const selectResult = await queryRunner(query);
@@ -784,7 +784,7 @@ exports.getLocations = async (req, res) => {
     if (req.params.location === "UnAllocated Location") {
       let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
       FROM scout s
-      join scout_member sm 
+      left join scout_member sm 
       on s.scoutedBy = sm.id
       WHERE s.assignedTo IS NULL`;
 
@@ -824,7 +824,7 @@ exports.getLocations = async (req, res) => {
     ) AS assignedToMember
 FROM
     scout scout
-JOIN
+    left JOIN
     scout_member SM1 ON SM1.id = scout.scoutedBy
 WHERE
     scout.assignedTo IS NOT NULL
