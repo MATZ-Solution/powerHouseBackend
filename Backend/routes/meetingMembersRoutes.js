@@ -14,6 +14,7 @@ router.get('/getMeetings', verifyToken, meetingMembersController.getMeetingLogsB
 router.get('/getMeetings/:id', verifyToken, meetingMembersController.getMeetingLogsById);
 // router.get("/getscouts", verifyToken , scoutController.getscouts);
 router.get("/getMeeting", verifyToken ,meetingMembersController.getMeetings ); 
+router.get("/getSingleMeetingLogs/:meetingID", verifyToken ,meetingMembersController.getSingleMeetingsLogs ); 
 
 
 module.exports = router; 

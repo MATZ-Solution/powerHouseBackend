@@ -302,7 +302,7 @@ exports.getscouts = async (req, res) => {
     // const { userId } = req.user;
     let query = `SELECT s.id, s.projectType, s.projectName, s.address, s.contractorName, s.contractorNumber, s.refrenceId,s.scoutedBy, sm.name as scoutedBy
     FROM scout s
-    JOIN scout_member sm
+    LEFT JOIN scout_member sm
     ON s.scoutedBy = sm.id;`
 
     const selectResult = await queryRunner(query);
@@ -788,7 +788,7 @@ exports.getLocations = async (req, res) => {
     if (req.params.location === "UnAllocated Location") {
       let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
       FROM scout s
-      join scout_member sm 
+     join scout_member sm 
       on s.scoutedBy = sm.id
       WHERE s.assignedTo IS NULL`;
 
@@ -803,41 +803,38 @@ exports.getLocations = async (req, res) => {
         res.status(404).json({ message: "No Location Found" });
       }
     }
-
     if (req.params.location === "Alloted Location") {
       let query = `
       SELECT 
-    scout.id,
-    scout.refrenceId,
-    scout.projectName,
-    scout.buildingType,
-    scout.city,
-    scout.address,
-    scout.contractorName,
-    scout.contractorNumber,
-    scout.assignedTo,
-    scout.scoutedBy,
-    SM1.name AS scouter,
+      scout.id,
+      scout.refrenceId,
+      scout.projectName,
+      scout.buildingType,
+      scout.city,
+      scout.address,
+      scout.contractorName,
+      scout.contractorNumber,
+      scout.assignedTo,
+      scout.scoutedBy,
+      SM1.name AS scouter,
     (
         SELECT 
-            GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo))
+        GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo))
         FROM 
-            scout_member SM2 
+        scout_member SM2 
         WHERE 
-            FIND_IN_SET(SM2.id, scout.assignedTo)
-    ) AS assignedToMember
-FROM
-    scout scout
-JOIN
-    scout_member SM1 ON SM1.id = scout.scoutedBy
-WHERE
-    scout.assignedTo IS NOT NULL
-GROUP BY
-    scout.id
-HAVING
-    assignedToMember IS NOT NULL;
-
-      `;
+        FIND_IN_SET(SM2.id, scout.assignedTo)
+    )   AS assignedToMember
+      FROM
+      scout scout
+      JOIN
+      scout_member SM1 ON SM1.id = scout.scoutedBy
+      WHERE
+      scout.assignedTo IS NOT NULL
+      GROUP BY
+      scout.id
+      HAVING
+      assignedToMember IS NOT NULL;`;
 
       let selectResult = await queryRunner(query);
       if (selectResult[0].length > 0) {
@@ -1052,3 +1049,26 @@ res.status(200).json({
   }
 };
 
+exports.getLongAndLat = async (req, res) => {
+
+  try {
+    const query = `SELECT id, buildingType, pinLocation FROM scout`;
+    let selectResult = await queryRunner(query);
+    // console.log("this is password: ", selectResult[0])
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "No Longitude And Latitude data Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to get Longitude And Latitude",
+      error: error.message,
+    });
+  }
+};

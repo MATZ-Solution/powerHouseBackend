@@ -27,6 +27,8 @@ router.get('/getAreas', verifyToken , scoutController.getAreas);
 router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
 router.get('/getLocation/:location', verifyToken , scoutController.getLocations);
 router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
+router.get('/getLongAndLat', verifyToken , scoutController.getLongAndLat);
+
 
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
 router.get('/getAllocatedLocation', verifyToken , scoutController.getAllocatedLocation);
