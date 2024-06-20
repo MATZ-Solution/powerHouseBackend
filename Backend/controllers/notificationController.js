@@ -12,7 +12,7 @@ const {
       let { page, limit,search } = req.query;
       if(!page) page=1
       if(!limit) limit=15
-      console.log(page,limit,search)
+      // console.log("this is limit", req.query);
       // let isAllRead=false
         const offset = (page - 1) * limit;
         let query = `SELECT * FROM notifications WHERE userId = ?`;

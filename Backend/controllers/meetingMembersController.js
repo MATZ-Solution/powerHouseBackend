@@ -213,7 +213,7 @@ const {
       const { date, searchTerm,page=1,limit=3 } = req.query;
 
       const offset = (page - 1) * limit;
-
+      // console.log("this is limit", req.query);
   
       // Construct the search condition
       const searchCondition = searchTerm

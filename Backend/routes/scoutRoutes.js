@@ -29,7 +29,7 @@ router.get('/getLocation/:location', verifyToken , scoutController.getLocations)
 router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
 
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
-
+router.get('/getAllocatedLocation', verifyToken , scoutController.getAllocatedLocation);
 
 
 // router.get('/getSubAreas', scoutController.getSubAreas);

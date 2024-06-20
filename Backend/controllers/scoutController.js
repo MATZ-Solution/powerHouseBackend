@@ -135,6 +135,7 @@ exports.scout = async (req, res) => {
 
     // Initialize scout member IDs array
     let scoutMemberIDs = [];
+    let sopIds=[];
 
     // Define criteria for scoring
     const criteria = { city, area: normalizedArea, projectType, buildingType };
@@ -153,11 +154,13 @@ exports.scout = async (req, res) => {
     // Extract scoutMemberIDs from top three rows
     topThreeRows.forEach((row) => {
       scoutMemberIDs.push(row.scoutMemberID);
+      sopIds.push(row.id);
     });
 
     // Assign scout members to the scout
     const assignedTo =
       scoutMemberIDs.length > 0 ? scoutMemberIDs.join(",") : null;
+    const sops = sopIds.length > 0 ? sopIds.join(",") : null;
 
     // Construct insert query
     // refrence id should be alphanumeric like if type project than check for resedential or commercial (R-001,C-001) and then add refrence id accordingly if market add commercial only
@@ -169,8 +172,8 @@ exports.scout = async (req, res) => {
       insertQuery = `
         INSERT INTO scout (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?)`;
+          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type, sops
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?,?)`;
       queryParams = [
         projectName,
         projectType,
@@ -188,6 +191,7 @@ exports.scout = async (req, res) => {
         userId,
         assignedTo,
         type,
+        sops
       ];
     } else {
       insertQuery = `
@@ -946,3 +950,105 @@ exports.updateScoutMember = async (req, res) => {
   }
 };
 // ###################### UPDATE SCOUTE MEMBER End #######################################
+
+
+
+exports.getAllocatedLocation = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { limit=5, page, search = "", projectType } = req.query; // Default search to an empty string
+    const offset = (page - 1) * limit;
+    // console.log("this is limit", req.query);
+    // Base query
+    let query = `
+      SELECT
+        scout.id,
+        scout.refrenceId,
+        scout.projectName,
+        scout.buildingType,
+        scout.city,
+        scout.address,
+        scout.contractorName,
+        scout.contractorNumber,
+        scout.assignedTo,
+        scout.sops,
+        scout.scoutedBy,
+        scout.projectType,
+        scout.created_at,
+        scout.pinLocation,
+       
+        scout_member.name AS scouter,
+        scout_member.role AS scouterRole,
+        (
+          SELECT
+            GROUP_CONCAT(scout_member.name ORDER BY FIELD(scout_member.id, scout.assignedTo))
+          FROM
+            scout_member
+          WHERE
+            FIND_IN_SET(scout_member.id, scout.assignedTo)
+        ) AS assignedToMember
+      FROM
+        scout
+      JOIN scout_member ON scout.scoutedBy = scout_member.id
+      
+      WHERE
+        scout.assignedTo IS NOT NULL
+        AND FIND_IN_SET(?, scout.assignedTo)
+        AND scout.projectName LIKE ?`;
+
+    // Add projectType filter if provided
+    const queryParams = [userId, `%${search}%`, parseInt(limit), offset];
+    if (projectType && projectType !== "All") {
+      if(projectType !== "Market"){
+        query += ` AND scout.buildingType = ?`;
+        queryParams.splice(2, 0, projectType);
+      }else{query += ` AND scout.projectType = ?`;
+      queryParams.splice(2, 0, projectType);}
+       // Insert projectType at the correct position
+    }
+
+    query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
+
+    const selectResult = await queryRunner(query, queryParams);
+    // console.log("this is allocated location", selectResult[0]);
+    if (selectResult[0].length > 0) {
+      const locationFiles=[];
+      for (const location of selectResult[0]) {
+        const filesQuery = `SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?`;
+        const filesResult = await queryRunner(filesQuery, [location.id]);
+        locationFiles.push(filesResult[0].length > 0 ? filesResult[0] : []);
+
+        location.files = filesResult[0];
+        // console.log("this is files", location);
+
+
+        if(location.sops){
+          // console.log("this is ", location.sops);
+          const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
+        const sopResult = await queryRunner(sopQuery, [location.sops]);
+        location.sops = sopResult[0];
+        }
+
+        
+      }
+      console.log("this is location files", selectResult[0][0].sops
+      );
+res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0],
+        });
+    }
+    else{
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching allocated locations:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
