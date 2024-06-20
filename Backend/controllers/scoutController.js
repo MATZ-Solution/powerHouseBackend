@@ -52,7 +52,7 @@ const { insertNotification } = require("../helper/insertNotification.js");
 //       const id = insertResult[0].insertId;
 //       if (req.files.length > 0) {
 //         for (const file of req.files) {
-//           console.log("file",file);
+//           // console.log("file",file);
 //           const insertFileResult = await queryRunner(
 //             "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
 //             [id, file.location, file.key]
@@ -85,7 +85,7 @@ const { insertNotification } = require("../helper/insertNotification.js");
 //         .json({ statusCode: 500, message: "Failed to Create Scout " });
 //     }
 //   } catch (error) {
-//     console.log("error",error);
+//     // console.log("error",error);
 //     return res.status(500).json({
 //       statusCode: 500,
 //       message: "Failed to Create Scout",
@@ -112,7 +112,7 @@ exports.scout = async (req, res) => {
       type,
     } = req.body;
 
-    console.log("Request body:", req.body);
+    // // console.log("Request body:", req.body);
 
     const currentDate = new Date();
 
@@ -127,11 +127,11 @@ exports.scout = async (req, res) => {
       projectType,
       buildingType ?? type
     );
-    console.log("Dynamic query:", query, queryParams);
+    // console.log("Dynamic query:", query, queryParams);
 
     // Query SOP table
     const sopResults = await queryRunner(query, queryParams);
-    console.log("SOP Results:", sopResults);
+    // console.log("SOP Results:", sopResults);
 
     // Initialize scout member IDs array
     let scoutMemberIDs = [];
@@ -270,10 +270,10 @@ exports.scout = async (req, res) => {
             `New location Allotted - ${projectName}`,
             scoutId
           );
-          console.log("Notification Inserted:", result);
+          // console.log("Notification Inserted:", result);
         }
       }
-      console.log("Notification Inserted:", notificationInserted);
+      // console.log("Notification Inserted:", notificationInserted);
       return res.status(200).json({
         statusCode: 200,
         message: "Scout Created successfully",
@@ -285,7 +285,7 @@ exports.scout = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("Error:", error);
+    // console.log("Error:", error);
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Create Scout",
@@ -357,7 +357,7 @@ exports.countScout = async (req, res) => {
   try {
     // const { userId } = req.user;
     const selectResult = await queryRunner(countScoutQuery);
-    console.log("this is count api", selectResult[0]);
+    // console.log("this is count api", selectResult[0]);
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
@@ -515,7 +515,7 @@ exports.AddArea = async (req, res) => {
 // ###################### Add CSV Area #######################################
 
 exports.AddAreaCSV = async (req, res) => {
-  console.log("this is city id", req.body.cityId);
+  // console.log("this is city id", req.body.cityId);
   try {
     if (!req.file) {
       return res
@@ -564,7 +564,7 @@ exports.AddAreaCSV = async (req, res) => {
             .status(200)
             .json({ message: "Areas processed successfully" });
         } catch (error) {
-          // console.log("this is error", error)
+          // // console.log("this is error", error)
           return res.status(500).json({
             message: "Failed to process areas",
             error: error.message,
@@ -579,7 +579,7 @@ exports.AddAreaCSV = async (req, res) => {
         }
       });
   } catch (error) {
-    console.log("this is error", err);
+    // console.log("this is error", err);
     return res
       .status(500)
       .json({ message: "Failed to process file", error: error.message });
@@ -676,7 +676,7 @@ exports.AddSubAreaCSV = async (req, res) => {
             .status(200)
             .json({ message: "Areas processed successfully" });
         } catch (error) {
-          // console.log("this is error", error)
+          // // console.log("this is error", error)
           return res.status(500).json({
             message: "Failed to process Sub areas",
             error: error.message,
@@ -691,7 +691,7 @@ exports.AddSubAreaCSV = async (req, res) => {
         }
       });
   } catch (error) {
-    console.log("this is error", err);
+    // console.log("this is error", err);
     return res
       .status(500)
       .json({ message: "Failed to process file", error: error.message });
@@ -727,7 +727,7 @@ exports.getCities = async (req, res) => {
 exports.getAreas = async (req, res) => {
   try {
     const { cityId } = req.query;
-    console.log(cityId);
+    // console.log(cityId);
     let cityArray = cityId.split(",");
     let selectResult;
     const placeholders = cityArray.map(() => "?").join(", ");
@@ -872,7 +872,7 @@ exports.addUnassignedScouter = async (req, res) => {
     }
     res.status(500).json({ message: "Failed To Assigned Scouter" });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Add Scouter",
@@ -885,12 +885,12 @@ exports.addUnassignedScouter = async (req, res) => {
 // ###################### Get Individual scout Member #######################################
 exports.getSingleScoutMember = async (req, res) => {
   let { userID } = req.params;
-  console.log("this is userId", userID);
+  // console.log("this is userId", userID);
 
   try {
     const query = `SELECT email, password, phoneNumber, name, address, position FROM scout_member where id = ?`;
     let selectResult = await queryRunner(query, [userID]);
-    // console.log("this is password: ", selectResult[0])
+    // // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
@@ -912,7 +912,7 @@ exports.getSingleScoutMember = async (req, res) => {
 
 exports.updateScoutMember = async (req, res) => {
   let { Name, address, email, phoneNumber, position, userID } = req.body;
-  console.log("this is req.body", req.body);
+  // console.log("this is req.body", req.body);
 
   try {
     const query = `UPDATE scout_member SET name = ?, address = ?, email = ?, phoneNumber = ?, position= ?  where id = ?; `;
@@ -955,7 +955,7 @@ exports.getAllocatedLocation = async (req, res) => {
     const { userId } = req.user;
     const { limit=5, page, search = "", projectType } = req.query; // Default search to an empty string
     const offset = (page - 1) * limit;
-    // console.log("this is limit", req.query);
+    // // console.log("this is limit", req.query);
     // Base query
     let query = `
       SELECT
@@ -1007,7 +1007,7 @@ exports.getAllocatedLocation = async (req, res) => {
     query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
 
     const selectResult = await queryRunner(query, queryParams);
-    // console.log("this is allocated location", selectResult[0]);
+    // // console.log("this is allocated location", selectResult[0]);
     if (selectResult[0].length > 0) {
       const locationFiles=[];
       for (const location of selectResult[0]) {
@@ -1016,11 +1016,11 @@ exports.getAllocatedLocation = async (req, res) => {
         locationFiles.push(filesResult[0].length > 0 ? filesResult[0] : []);
 
         location.files = filesResult[0];
-        // console.log("this is files", location);
+        // // console.log("this is files", location);
 
 
         if(location.sops){
-          // console.log("this is ", location.sops);
+          // // console.log("this is ", location.sops);
           const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
         const sopResult = await queryRunner(sopQuery, [location.sops]);
         location.sops = sopResult[0];
@@ -1028,8 +1028,8 @@ exports.getAllocatedLocation = async (req, res) => {
 
         
       }
-      console.log("this is location files", selectResult[0][0].sops
-      );
+      // console.log("this is location files", selectResult[0]
+      
 res.status(200).json({
           statusCode: 200,
           message: "Success",
@@ -1054,7 +1054,7 @@ exports.getLongAndLat = async (req, res) => {
   try {
     const query = `SELECT id, buildingType, pinLocation FROM scout`;
     let selectResult = await queryRunner(query);
-    // console.log("this is password: ", selectResult[0])
+    // // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
       res.status(200).json({
         statusCode: 200,
