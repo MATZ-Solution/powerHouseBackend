@@ -397,7 +397,7 @@ exports.createSOP = async (req, res) => {
     if (insertSOP[0].affectedRows > 0) {
       const normalizedArea = normalizeAreaName(area);
       let noScoutFound = true;
-
+      const sopId=insertSOP[0].insertId;
       for (const areaId of areasId) {
         let { query, queryParams } = buildDynamicQuery(
           "SELECT * FROM scout WHERE 1=1",
@@ -438,8 +438,10 @@ exports.createSOP = async (req, res) => {
               // }
               try {
                 const result = await queryRunner(
-                  "UPDATE scout SET assignedTo=? WHERE id=?",
-                  [user, scout.id]
+                  "UPDATE scout SET assignedTo=?, sops=? WHERE id=?",
+                  [user,
+                    scout.sops ? `${scout.sops},${sopId}` : sopId
+                    ,scout.id]
                 );
 
                 if (result[0].affectedRows > 0) {

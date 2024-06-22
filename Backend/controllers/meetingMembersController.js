@@ -240,13 +240,13 @@ const {
   exports.getMeetingLogsByDate = async (req, res) => {
     try {
       const { userId } = req.user;
-      const { date, searchTerm,page=1,limit=3 } = req.query;
+      const { date, search,page=1,limit=3 } = req.query;
 
       const offset = (page - 1) * limit;
-
+      // console.log("this is limit", req.query);
   
       // Construct the search condition
-      const searchCondition = searchTerm
+      const searchCondition = search
         ? `AND (scout.projectName LIKE ? OR scout.contractorName LIKE ? OR scout.address LIKE ?)`
         : '';
   
@@ -273,11 +273,11 @@ const {
   
       // Build the parameters array
       const params = [userId];
-      if (searchTerm) {
-        const likeSearchTerm = `%${searchTerm}%`;
+      if (search) {
+        const likeSearchTerm = `%${search}%`;
         params.push(likeSearchTerm, likeSearchTerm, likeSearchTerm);
       }
-      console.log(params);
+      // console.log(params);
       const selectMeetingResult = await queryRunner(selectMeetingQuery, params);
       let anyMeetingInProgress = false;
       if (selectMeetingResult[0].length > 0) {
@@ -339,7 +339,7 @@ const {
       const { id } = req.params;
       const { userId } = req.user;
       const meetingLogId=id;
-      console.log(meetingLogId);
+      // console.log(meetingLogId);
       const selectMeetingQuery = `
       SELECT 
           meetings.id, 
@@ -357,7 +357,7 @@ const {
           FIND_IN_SET(?, meetings.assignedTo)
   `;
   const selectMeetingResult = await queryRunner(selectMeetingQuery, [userId]);
-  console.log(selectMeetingResult[0]);
+  // console.log(selectMeetingResult[0]);
   if (selectMeetingResult[0].length > 0) {
     const meetingLogQuery = `SELECT * FROM meeting_logs WHERE id = ?`;
     const meetingLogResult = await queryRunner(meetingLogQuery, [meetingLogId]);
