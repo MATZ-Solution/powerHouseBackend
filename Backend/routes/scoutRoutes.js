@@ -32,7 +32,7 @@ router.get('/getLongAndLat', verifyToken , scoutController.getLongAndLat);
 
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
 router.get('/getAllocatedLocation', verifyToken , scoutController.getAllocatedLocation);
-
+router.get('/getScoutedLocation', verifyToken , scoutController.getScoutsByUserIdWithAllInformation);
 
 // router.get('/getSubAreas', scoutController.getSubAreas);
 

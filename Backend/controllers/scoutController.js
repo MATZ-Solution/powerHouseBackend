@@ -17,82 +17,7 @@ const { normalizeAreaName } = require("../helper/normalizeArea.js");
 const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
 const { calculateScore } = require("../helper/calculateScore.js");
 const { insertNotification } = require("../helper/insertNotification.js");
-// const normalizeAreaName = require("../helper/normalizeAreaName.js");
-// const { calculateScore } = require("../helper/calculateScore.js");
-// const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
-// ###################### Scout Start #######################################
-// exports.scout = async (req, res) => {
-//   try {
 
-//     const {userId}=req.user;
-//     const {projectName,projectType,city,area,block,buildingType,
-//       size,address,pinLocation,contractorName,contractorNumber,type} = req.body;
-
-//     // const {userId} = req.user;
-//     const currentDate = new Date();
-
-//     const insertResult = await queryRunner(insertScoutQuery, [
-//       projectName,
-//       projectType,
-
-//       city,
-//       area,
-//       block,
-//       type,
-//       size,
-//       address,
-//       pinLocation,
-//       contractorName,
-//       contractorNumber,
-//       "Pending",
-//       currentDate,
-//       userId
-//     ]);
-//     if (insertResult[0].affectedRows > 0) {
-//       const id = insertResult[0].insertId;
-//       if (req.files.length > 0) {
-//         for (const file of req.files) {
-//           // console.log("file",file);
-//           const insertFileResult = await queryRunner(
-//             "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
-//             [id, file.location, file.key]
-//           );
-//           if (insertFileResult[0].affectedRows <= 0) {
-//             // If any file insertion fails, return an error response
-//             return res.status(500).json({
-//               statusCode: 500,
-//               message: "Failed to Create Scout",
-//             });
-//           }
-
-//         }
-//       }
-//       else{
-//         return res.status(200).json({
-//           statusCode: 200,
-//           message: "Scout Created successfully",
-//           id: id,
-//         });
-//       }
-//       return res.status(200).json({
-//         statusCode: 200,
-//         message: "Scout Created successfully",
-//         id: insertResult[0].insertId,
-//       });
-//     } else {
-//       return res
-//         .status(500)
-//         .json({ statusCode: 500, message: "Failed to Create Scout " });
-//     }
-//   } catch (error) {
-//     // console.log("error",error);
-//     return res.status(500).json({
-//       statusCode: 500,
-//       message: "Failed to Create Scout",
-//       error: error.message,
-//     });
-//   }
-// };
 
 exports.scout = async (req, res) => {
   try {
@@ -1049,6 +974,58 @@ res.status(200).json({
   }
 };
 
+exports.getAllocatedLocationByLocationId = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { locationId } = req.params;
+    const query = `
+      SELECT
+        scout.id,
+        scout.refrenceId,
+        scout.projectName,
+        scout.buildingType,
+        scout.city,
+        scout.address,
+        scout.contractorName,
+        scout.contractorNumber,
+        scout.assignedTo,
+        scout.sops,
+        scout.scoutedBy,
+        scout.projectType,
+        scout.created_at,
+        scout.pinLocation,
+        scout_member.name AS scouter,
+        scout_member.role AS scouterRole,
+        (
+          SELECT
+            GROUP_CONCAT(scout_member.name ORDER BY FIELD(scout_member.id, scout.assignedTo))
+          FROM
+            scout_member
+          WHERE
+            FIND_IN_SET(scout_member.id, scout.assignedTo)
+        ) AS assignedToMember
+      FROM
+        scout
+      JOIN scout_member ON scout.scoutedBy = scout_member.id
+      WHERE
+        scout.assignedTo IS NOT NULL
+        AND FIND_IN_SET(?, scout.assignedTo)
+        AND scout.id = ?`;
+
+    const selectResult = await queryRunner(query, [userId, locationId]);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "Location Not Found" });
+    }
+  } catch (error) {
+    
+  }
+}
 exports.getLongAndLat = async (req, res) => {
 
   try {
@@ -1068,6 +1045,103 @@ exports.getLongAndLat = async (req, res) => {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to get Longitude And Latitude",
+      error: error.message,
+    });
+  }
+};
+
+
+exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { limit=5, page, search = "", projectType } = req.query;
+    const offset = (page - 1) * limit;
+    // now we have to select the scouts based on scoutedById with all the related info from all the tables
+    let query = `
+    SELECT
+      scout.id,
+      scout.refrenceId,
+      scout.projectName,
+      scout.buildingType,
+      scout.city,
+      scout.address,
+      scout.contractorName,
+      scout.contractorNumber,
+      scout.assignedTo,
+      scout.sops,
+      scout.scoutedBy,
+      scout.projectType,
+      scout.created_at,
+      scout.pinLocation
+    FROM
+      scout
+
+      where scout.scoutedBy = ?`;
+      let queryParams = [userId];
+      if(search){
+        query += ` AND scout.projectName LIKE ?`;
+        queryParams.push(`%${search}%`);
+      }
+      if(projectType){
+        query += ` AND scout.projectType = ?`;
+        queryParams.push(projectType);
+      }
+      query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
+      queryParams.push(parseInt(limit), offset);
+      const selectResult = await queryRunner(query, queryParams);
+      if (selectResult[0].length > 0) {
+        try {
+            await Promise.all(
+                selectResult[0].map(async (location) => {
+                    const meetingandmeetinglogq = 'SELECT meetings.id, meeting_logs.id, meeting_logs.startTime, meeting_logs.endTime, meeting_logs.inProgress FROM meetings JOIN meeting_logs ON meetings.id = meeting_logs.meetingId WHERE meetings.locationId = ?';
+                    const meetingandmeetinglog = await queryRunner(meetingandmeetinglogq, [location.id]);
+                    location.meeting = meetingandmeetinglog[0];
+                    
+                    const filesQuery = 'SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?';
+                    const filesResult = await queryRunner(filesQuery, [location.id]);
+                    console.log("this is files", filesResult[0]);
+                    location.files = filesResult[0];
+                    
+                    if (location.sops) {
+                        const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
+                        const sopResult = await queryRunner(sopQuery, [location.sops]);
+                        location.sops = sopResult[0];
+                    }
+                    
+                    if (location.assignedTo) {
+                        const assignedToQuery = 'SELECT id, name, email, phoneNumber,role As scouterRole FROM scout_member WHERE id IN (?)';
+                        const assignedToResult = await queryRunner(assignedToQuery, [location.assignedTo]);
+                        location.assignedTo = assignedToResult[0];
+                    }
+                })
+            );
+    
+            console.log("this is allocated location", selectResult[0][0].assignedTo);
+            res.status(200).json({
+                statusCode: 200,
+                message: "Success",
+                data: selectResult[0],
+            });
+        } catch (error) {
+            console.error("Error processing locations", error);
+            res.status(500).json({
+                statusCode: 500,
+                message: "Internal Server Error",
+            });
+        }
+    }
+     else {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: [],
+        });
+      }
+  } catch (error) {
+    console.error("Error fetching allocated locations:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Scout Data",
       error: error.message,
     });
   }
