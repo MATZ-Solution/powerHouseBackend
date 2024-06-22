@@ -197,7 +197,7 @@ const {
           data: selectResult[0],
         });
       } else {
-        res.status(404).json({ message: "No Meetings Found" });
+        res.status(200).json({ data: selectResult[0], message: "No Meetings Found" });
       }
     } catch (error) {
       return res.status(500).json({

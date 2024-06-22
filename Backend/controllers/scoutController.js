@@ -309,7 +309,7 @@ exports.getscouts = async (req, res) => {
         data: selectResult[0],
       });
     } else {
-      res.status(404).json({ message: "Scout Data Not Found" });
+      res.status(200).json({data: selectResult[0], message: "Scout Data Not Found" });
     }
   } catch (error) {
     return res.status(500).json({
