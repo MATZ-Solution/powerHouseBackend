@@ -296,7 +296,7 @@ exports.scout = async (req, res) => {
 exports.getscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    let query = `SELECT s.id, s.projectType, s.projectName, s.address, s.contractorName, s.contractorNumber, s.refrenceId,s.scoutedBy, sm.name as scoutedBy
+    let query = `SELECT s.id, s.projectType, s.projectName, s.address, s.contractorName, s.contractorNumber, s.refrenceId,s.scoutedBy, sm.name as scoutedBy, s.created_at
     FROM scout s
     LEFT JOIN scout_member sm
     ON s.scoutedBy = sm.id;`
@@ -778,28 +778,8 @@ exports.getSubAreas = async (req, res) => {
 
 // ###################### Get Sub Areas By id start #######################################
 
-exports.getLocations = async (req, res) => {
-
+exports.getAllotedLocations = async (req, res) => {
   try {
-    if (req.params.location === "UnAllocated Location") {
-      let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
-      FROM scout s
-     join scout_member sm 
-      on s.scoutedBy = sm.id
-      WHERE s.assignedTo IS NULL`;
-
-      let selectResult = await queryRunner(query1);
-      if (selectResult[0].length > 0) {
-        res.status(200).json({
-          statusCode: 200,
-          message: "Success",
-          data: selectResult[0],
-        });
-      } else {
-        res.status(404).json({ message: "No Location Found" });
-      }
-    }
-    if (req.params.location === "Alloted Location") {
       let query = `
       SELECT 
       scout.id,
@@ -840,9 +820,38 @@ exports.getLocations = async (req, res) => {
           data: selectResult[0],
         });
       } else {
-        res.status(404).json({ message: "No Location Found" });
+        res.status(200).json({data: selectResult[0], message: "No Location Found" });
       }
-    }
+    
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to get location",
+      error: error.message,
+    });
+  }
+};
+
+exports.getUnAllotedLocations = async (req, res) => {
+
+  try {
+      let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
+      FROM scout s
+     join scout_member sm 
+      on s.scoutedBy = sm.id
+      WHERE s.assignedTo IS NULL`;
+
+      let selectResult = await queryRunner(query1);
+      if (selectResult[0].length > 0) {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0],
+        });
+      } else {
+        res.status(200).json({data:selectResult[0], message: "No Location Found" });
+      }
+    
   } catch (error) {
     return res.status(500).json({
       statusCode: 500,
@@ -944,6 +953,9 @@ exports.updateScoutMember = async (req, res) => {
 };
 // ###################### UPDATE SCOUTE MEMBER End #######################################
 
+
+// ###################### GET LONGITUDE AND LATITUDE START #######################################
+
 exports.getLongAndLat = async (req, res) => {
 
   try {
@@ -967,3 +979,33 @@ exports.getLongAndLat = async (req, res) => {
     });
   }
 };
+
+// ###################### GET LONGITUDE AND LATITUDE END #######################################
+
+
+// ###################### GET LONGITUDE AND LATITUDE START #######################################
+
+exports.getScoutReport = async (req, res) => {
+  try {
+    const query = `SELECT id, buildingType, pinLocation FROM scout`;
+    let selectResult = await queryRunner(query);
+    // console.log("this is password: ", selectResult[0])
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "No Longitude And Latitude data Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to get Longitude And Latitude",
+      error: error.message,
+    });
+  }
+};
+
+// ###################### GET LONGITUDE AND LATITUDE END #######################################
