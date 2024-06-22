@@ -197,7 +197,7 @@ const {
           data: selectResult[0],
         });
       } else {
-        res.status(404).json({ message: "No Meetings Found" });
+        res.status(200).json({ data: selectResult[0], message: "No Meetings Found" });
       }
     } catch (error) {
       return res.status(500).json({
@@ -214,9 +214,9 @@ const {
       const query = `SELECT ml.id, ml.meetingId, DATE_FORMAT(ml.startTime, '%e-%b-%y %h:%i %p') AS startTime, 
       DATE_FORMAT(ml.endTime, '%e-%b-%y %h:%i %p') AS endTime, ml.inProgress, ml.meetingNotes, ml.startedBy,ml.members,
       sm.id AS scout_member_id, sm.name AS startedByName
-FROM matzsolu_powerhouse_new.meeting_logs ml
- JOIN matzsolu_powerhouse_new.scout_member sm ON ml.startedBy = sm.id
-where ml.meetingId = ?`;
+      FROM matzsolu_powerhouse_new.meeting_logs ml
+      LEFT JOIN matzsolu_powerhouse_new.scout_member sm ON ml.startedBy = sm.id
+      where ml.meetingId = ?`;
       let selectResult = await queryRunner(query, [meetingID]);
       if (selectResult[0].length > 0) {
         res.status(200).json({

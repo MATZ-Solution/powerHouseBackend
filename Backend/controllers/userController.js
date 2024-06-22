@@ -143,7 +143,7 @@ exports.getScoutsMember = async (req, res) => {
         data: selectResult[0],
       });
     } else {
-      res.status(404).json({ message: "Scout Members Not Found" });
+      res.status(200).json({ data: selectResult[0], message: "Scout Members Not Found" });
     }
   } catch (error) {
     return res.status(500).json({
