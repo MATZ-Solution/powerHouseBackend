@@ -1065,6 +1065,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
     const { userId } = req.user;
     const { limit=5, page, search = "", projectType } = req.query;
     const offset = (page - 1) * limit;
+    console.log("this is limit", req.query)
     // now we have to select the scouts based on scoutedById with all the related info from all the tables
     let query = `
     SELECT
@@ -1092,12 +1093,19 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
         queryParams.push(`%${search}%`);
       }
       if(projectType){
-        query += ` AND scout.projectType = ?`;
-        queryParams.push(projectType);
+        if(projectType==="Market"){query += ` AND scout.projectType = ?`;
+        queryParams.push(projectType);}
+        else if(projectType!=="All"){
+          query += ` AND scout.buildingType = ?`;
+          queryParams.push(projectType);
+        }
+        
       }
       query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
       queryParams.push(parseInt(limit), offset);
+      // console.log("this is query", query, queryParams);
       const selectResult = await queryRunner(query, queryParams);
+      // console.log("this is allocated location", selectResult[0]);
       if (selectResult[0].length > 0) {
         try {
             await Promise.all(
@@ -1125,7 +1133,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
                 })
             );
     
-            console.log("this is allocated location", selectResult[0][0].assignedTo);
+            // console.log("this is allocated location", selectResult[0][0].assignedTo);
             res.status(200).json({
                 statusCode: 200,
                 message: "Success",
