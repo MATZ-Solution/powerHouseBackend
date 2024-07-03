@@ -7,6 +7,7 @@ const userRoutes = require("./routes/userRoutes");
 const scoutRoutes = require("./routes/scoutRoutes");
 const MeetingMembersRoutes = require("./routes/meetingMembersRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 const { getConnectionFromPool } = require("./config/connection");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -38,6 +39,7 @@ app.use("/", userRoutes);
 app.use("/scout", scoutRoutes);
 app.use("/MeetingMembers", MeetingMembersRoutes);
 app.use("/notify", notificationRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 
 server.listen(2300, () => {
