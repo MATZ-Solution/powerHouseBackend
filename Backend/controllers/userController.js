@@ -12,6 +12,7 @@ const {
   insertScoutUserQuery,
   addResetToken,
   updatePassword,
+  SOPQuery
 } = require("../constants/queries");
 
 const { hashedPassword } = require("../helper/hash");
@@ -500,6 +501,28 @@ exports.createSOP = async (req, res) => {
   }
 };
 
+// ######################################  View SOP  ########################################################
+exports.viewSOP = async (req, res) => {
+  try {
+    const selectResult = await queryRunner(SOPQuery);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(404).json({ message: "SOP Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get SOP",
+      error: error.message,
+    });
+  }
+}
+// ##################################### View SOP #########################################################
 exports.getProfile = async (req, res) => {
   const { userId } = req.user;
   try {

@@ -33,3 +33,4 @@ exports.insertSubAreaQuery = "INSERT INTO subarea (areaId,subAreaName) VALUES (?
 exports.insertMeetingMembersQuery = "INSERT INTO meetingmembers (name,phoneNumber,email,address,position,cityId,areaIds,subAreaIds,created_at) VALUES (?,?,?,?,?,?,?,?,?)";
 exports.dashboardPieChartQuery = "SELECT SM.name, COUNT(SM.name) AS entry_count FROM `scout` AS S JOIN `scout_member` AS SM ON S.scoutedBy = SM.id GROUP BY SM.name;";
 exports.dashboardLinearChartQuery = "SELECT DATE_FORMAT(created_at, '%M') as month, COUNT(*) as count FROM `scout` GROUP BY month order by id ASC";
+exports.SOPQuery = "SELECT * FROM `sop`order by id DESC;";
