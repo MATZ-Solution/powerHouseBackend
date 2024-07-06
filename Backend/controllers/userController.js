@@ -27,7 +27,8 @@ const config = process.env;
 
 // ###################### user Create #######################################
 exports.createScoutUser = async function (req, res) {
-  const { Name, phoneNumber, email, address, position, password } = req.body;
+  const { Name, phoneNumber, email, address, position, department, password } = req.body;
+  console.log(req.body);
   const currentDate = new Date();
   try {
     
@@ -54,6 +55,7 @@ exports.createScoutUser = async function (req, res) {
       email,
       address,
       position,
+      department,
       hashPassword,
       currentDate,
     ]);

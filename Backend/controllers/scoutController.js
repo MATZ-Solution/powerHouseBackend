@@ -739,7 +739,7 @@ exports.getAllotedLocations = async (req, res) => {
       GROUP BY
       scout.id
       HAVING
-      assignedToMember IS NOT NULL;`;
+      assignedToMember IS NOT NULL order by id desc`;
 
       let selectResult = await queryRunner(query);
       if (selectResult[0].length > 0) {
@@ -768,7 +768,7 @@ exports.getUnAllotedLocations = async (req, res) => {
       FROM scout s
      join scout_member sm 
       on s.scoutedBy = sm.id
-      WHERE s.assignedTo IS NULL`;
+      WHERE s.assignedTo IS NULL order by id desc`;
 
       let selectResult = await queryRunner(query1);
       if (selectResult[0].length > 0) {
