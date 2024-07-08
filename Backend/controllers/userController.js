@@ -1,7 +1,3 @@
-// const {
-//   sendMail,
-//   ForgetsendMail,
-// } = require("../sendmail/sendmail.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const imageToDelete = require("./../middleware/deleteImage.js");
