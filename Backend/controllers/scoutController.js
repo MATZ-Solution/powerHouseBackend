@@ -1063,7 +1063,7 @@ exports.getLongAndLat = async (req, res) => {
 exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { limit=5, page, search = "", projectType } = req.query;
+    const { limit=5, page, search = "", projectType,locationId } = req.query;
     const offset = (page - 1) * limit;
     console.log("this is limit", req.query)
     // now we have to select the scouts based on scoutedById with all the related info from all the tables
@@ -1085,9 +1085,16 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
       scout.pinLocation
     FROM
       scout
-
-      where scout.scoutedBy = ?`;
-      let queryParams = [userId];
+`;
+      let queryParams = [];
+      if(locationId){
+        query += ` WHERE scout.id = ?`;
+        queryParams.push(locationId);
+      }
+      else{
+        query += ` WHERE scout.scoutedBy = ?`;
+        queryParams.push(userId);
+      }
       if(search){
         query += ` AND scout.projectName LIKE ?`;
         queryParams.push(`%${search}%`);
