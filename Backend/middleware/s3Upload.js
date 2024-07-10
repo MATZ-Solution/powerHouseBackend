@@ -21,7 +21,8 @@ const upload = multer({
     bucket: config.bucketName,
     acl: 'public-read',
     key: function (req, file, cb) {
-        // console.log(file);
+      console.log("file");
+        console.log(file);
       cb(null, Date.now().toString() + '-' + file.originalname);
     }
   })

@@ -7,7 +7,8 @@ const multer = require('multer');
 const upload = multer();
 const s3Upload = require('../middleware/s3Upload');
 
-router.post("/create", catalogueController.createCatalogue);
-// router.get("/linearChart", dashboardController.linearChart);
+
+router.post("/create",s3Upload.single( 'document' ) ,catalogueController.createCatalogue);
+router.get("/getCatalogue", catalogueController.getCatalogue);
 
 module.exports = router;
