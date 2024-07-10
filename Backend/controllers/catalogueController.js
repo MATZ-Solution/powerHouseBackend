@@ -10,7 +10,11 @@ const {
 
 exports.createCatalogue = async (req, res) => {
     try {
-        const { title,document } = req.body;
+        let document = null;
+        if (req.file) {
+            document = req.file.location;
+        }
+        const { title } = req.body;
         const currentDate = new Date();
       const selectResult = await queryRunner(selectQuery("catalogue","title"),[title]);
       if (selectResult[0].length > 0) {
@@ -24,6 +28,7 @@ exports.createCatalogue = async (req, res) => {
         return res.status(200).json({
           statusCode: 200,
           message: `catalogue Saved Successful`,
+          document : document
         });
       }else{
         return res.status(200).json({
@@ -40,5 +45,26 @@ exports.createCatalogue = async (req, res) => {
       });
     }
 };
-
-
+exports.getCatalogue = async (req, res) => {
+    try {
+      const selectResult = await queryRunner(selectQuery("catalogue"));
+      if (selectResult[0].length > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: `Success`,
+          data: selectResult[0],
+        });
+      }else{
+        return res.status(404).json({
+            statusCode: 404,
+            message: `No Data Found`,
+          });
+      }
+    } catch (error) {
+      res.status(500).json({
+        statusCode: 500,
+        message: "Failed to get Catalogue",
+        error: error.message
+      });
+    }
+};

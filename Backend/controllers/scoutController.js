@@ -1038,8 +1038,8 @@ exports.getAllocatedLocationByLocationId = async (req, res) => {
 exports.getLongAndLat = async (req, res) => {
 
   try {
-    const query = `SELECT id, buildingType, pinLocation FROM scout`;
-    let selectResult = await queryRunner(query);
+    // const query = `SELECT id, buildingType, pinLocation FROM scout`;
+    let selectResult = await queryRunner(selectQuery("scout"));
     // // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
       res.status(200).json({
@@ -1199,3 +1199,31 @@ exports.getScoutReport = async (req, res) => {
 };
 
 // ###################### GET LONGITUDE AND LATITUDE END #######################################
+
+
+
+
+// ###################### scoutMap #######################################
+exports.scoutMap = async (req, res) => {
+  try {
+    const selectResult = await queryRunner(selectQuery("scout"));
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Success`,
+        data: selectResult[0]
+      });
+    }else{
+      return res.status(200).json({
+        message: `No data Found`,
+      });
+    }
+    
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to Get Scouts",
+      message: error.message,
+    });
+  }
+};
+// ###################### scoutMap #######################################

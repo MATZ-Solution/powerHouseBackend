@@ -19,6 +19,7 @@ router.post('/addUnassignedScouter', verifyToken , scoutController.addUnassigned
 router.post('/AddSubAreaCSV', verifyToken , uploadCSV.single('file'), scoutController.AddSubAreaCSV);
 
 // router.get('/getAreas', scoutController.getAreas);
+// router.get("/getscouts", verifyToken , scoutController.getscouts);
 router.get("/getscouts", verifyToken , scoutController.getscouts);
 router.get('/getScoutsByUserId', verifyToken , scoutController.getScoutByUserId);
 router.get("/countScout", verifyToken , scoutController.countScout);
@@ -38,6 +39,8 @@ router.get('/getLongAndLat', verifyToken , scoutController.getLongAndLat);
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
 router.get('/getAllocatedLocation', verifyToken , scoutController.getAllocatedLocation);
 router.get('/getScoutedLocation', verifyToken , scoutController.getScoutsByUserIdWithAllInformation);
+router.get('/scoutMap', scoutController.scoutMap);
+
 // router.get('/getSubAreas', scoutController.getSubAreas);
 
 

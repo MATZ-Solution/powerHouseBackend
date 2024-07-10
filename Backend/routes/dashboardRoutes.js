@@ -7,8 +7,8 @@ const multer = require('multer');
 const upload = multer();
 const s3Upload = require('../middleware/s3Upload');
 
-router.get("/pieChart", dashboardController.pieChart);
-router.get("/linearChart", dashboardController.linearChart);
+router.get("/pieChart",verifyToken, dashboardController.pieChart);
+router.get("/linearChart",verifyToken, dashboardController.linearChart);
 // router.get("/scoutsMember", verifyToken, userController.getScoutsMember);
 
 module.exports = router;
