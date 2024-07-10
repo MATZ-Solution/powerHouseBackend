@@ -10,14 +10,10 @@ const {
 
 exports.createCatalogue = async (req, res) => {
     try {
-        console.log("1")
         let document = null;
         if (req.file) {
-            console.log("2")
             document = req.file.location;
         }
-        console.log("3")
-
         const { title } = req.body;
         const currentDate = new Date();
       const selectResult = await queryRunner(selectQuery("catalogue","title"),[title]);

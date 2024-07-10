@@ -8,7 +8,7 @@ const upload = multer();
 const s3Upload = require('../middleware/s3Upload');
 
 
-router.post("/create",s3Upload.single( 'document' ) ,catalogueController.createCatalogue);
-router.get("/getCatalogue", catalogueController.getCatalogue);
+router.post("/create",verifyToken,s3Upload.single( 'document' ) ,catalogueController.createCatalogue);
+router.get("/getCatalogue",verifyToken, catalogueController.getCatalogue);
 
 module.exports = router;

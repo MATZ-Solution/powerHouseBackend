@@ -1038,7 +1038,7 @@ exports.getAllocatedLocationByLocationId = async (req, res) => {
 exports.getLongAndLat = async (req, res) => {
 
   try {
-    const query = `SELECT id, buildingType, pinLocation FROM scout`;
+    // const query = `SELECT id, buildingType, pinLocation FROM scout`;
     let selectResult = await queryRunner(selectQuery("scout"));
     // // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
