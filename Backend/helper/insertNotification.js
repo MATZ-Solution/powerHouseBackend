@@ -5,6 +5,10 @@ exports.insertNotification = async (user_id,
     
       try {
         if(relevantId){
+            console.log(user_id,
+                notification_message,
+                false,
+                relevantId)
             const query = `INSERT INTO notifications (userId, message, is_read,relevantId) VALUES ( ?, ?, ?,?)`;
             const insertResult=await queryRunner(
                 query,[

@@ -576,3 +576,143 @@ exports.updateProfile = async (req, res) => {
     });
   }
 }
+
+
+exports.updateLocation = async (req, res) => {
+  const { userId } = req.user;
+  const { latitude, longitude } = req.body;
+  console.log(req.body);
+  try {
+    const updateResult = await queryRunner(
+      "UPDATE scout_member SET latitude=? longitude=? WHERE id=?",
+      [latitude,longitude, userId]
+    );
+    if (updateResult[0].affectedRows > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Location Updated Successfully",
+      });
+    } else {
+      res.status(404).json({ message: "Location Not Updated" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Update Location",
+      error: error.message,
+    });
+  }
+};
+
+exports.getNearByMembers = async (req, res) => {
+  const { latitude,longitude, radius = 5, page = 1, limit = 5, search = null } = req.query;
+  
+  const userId = req.user.userId;
+  // Calculate offset
+  const offset = (page - 1) * limit;
+console.log(latitude,
+  longitude,
+  latitude,userId,
+  search,
+  search,
+  radius,
+  
+  limit,
+  offset,);
+  try {
+    const usersQuery = `
+      SELECT id, name, latitude, longitude, picture, department, role,
+       (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance
+FROM scout_member
+WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND id != ?
+  AND (? IS NULL OR name LIKE CONCAT('%', ?, '%'))
+HAVING distance < ?
+ORDER BY distance
+LIMIT ? OFFSET ?;
+`;
+
+    const users = await queryRunner(usersQuery, [
+      latitude,
+  longitude,
+  latitude,
+  userId,
+  search,
+  search,
+  radius,
+  limit,
+  offset,
+    ]);
+
+    
+
+    
+
+    if (users[0].length > 0) {
+      console.log(users[0]);
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: users[0],
+        
+      });
+    } else {
+      res.status(200).json({ data: [], message: "No users found" });
+    }
+
+  } catch (error) {
+    console.error('Error fetching nearby users:', error);
+    res.status(500).send('Error fetching nearby users');
+  }
+};
+
+exports.getMembers = async (req, res) => {
+  const { page = 1, limit = 10, search = null, department = null, role = null } = req.query;
+  console.log(req.query);
+  const userId = req.user.userId;
+  // Calculate offset
+  const offset = (page - 1) * limit;
+  try {
+    let usersQuery = `
+      SELECT id, name, latitude, longitude, picture, department, role, email, phoneNumber
+      FROM scout_member
+      WHERE id != ?
+    `;
+
+    const queryParams = [userId];
+
+    // Conditionally add WHERE clauses for optional parameters
+    if (search) {
+      usersQuery += ` AND name LIKE CONCAT('%', ?, '%')`;
+      queryParams.push(search);
+    }
+    if (department) {
+      usersQuery += ` AND department = ?`;
+      queryParams.push(department);
+    }
+    if (role) {
+      usersQuery += ` AND role = ?`;
+      queryParams.push(role);
+    }
+
+    usersQuery += ` LIMIT ? OFFSET ?;`;
+
+    queryParams.push(limit, offset);
+
+    const users = await queryRunner(usersQuery, queryParams);
+
+    if (users[0].length > 0) {
+      console.log(users[0]);
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: users[0],
+      });
+    } else {
+      console.log(users[0]);
+      res.status(200).json({ data: [], message: "No users found" });
+    }
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Error fetching users');
+  }
+};
