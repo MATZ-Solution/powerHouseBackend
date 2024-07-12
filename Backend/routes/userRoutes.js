@@ -21,4 +21,5 @@ router.put('/updateProfile', verifyToken,s3Upload.single(
 router.put('/updateLocation', verifyToken, userController.updateLocation);
 router.get('/getNearByMembers', verifyToken, userController.getNearByMembers);
 router.get('/getMembers', verifyToken, userController.getMembers);
+router.get('/statistics', verifyToken, userController.statistics);
 module.exports = router;
