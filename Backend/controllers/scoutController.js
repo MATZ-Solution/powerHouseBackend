@@ -885,40 +885,55 @@ exports.getAllocatedLocation = async (req, res) => {
     // // console.log("this is limit", req.query);
     // Base query
     let query = `
-      SELECT
-        scout.id,
-        scout.refrenceId,
-        scout.projectName,
-        scout.buildingType,
-        scout.city,
-        scout.address,
-        scout.contractorName,
-        scout.contractorNumber,
-        scout.assignedTo,
-        scout.sops,
-        scout.scoutedBy,
-        scout.projectType,
-        scout.created_at,
-        scout.pinLocation,
-       
-        scout_member.name AS scouter,
-        scout_member.role AS scouterRole,
-        (
-          SELECT
-            GROUP_CONCAT(scout_member.name ORDER BY FIELD(scout_member.id, scout.assignedTo))
-          FROM
-            scout_member
-          WHERE
-            FIND_IN_SET(scout_member.id, scout.assignedTo)
-        ) AS assignedToMember
-      FROM
-        scout
-      JOIN scout_member ON scout.scoutedBy = scout_member.id
-      
-      WHERE
-        scout.assignedTo IS NOT NULL
-        AND FIND_IN_SET(?, scout.assignedTo)
-        AND scout.projectName LIKE ?`;
+     SELECT
+  scout.id,
+  scout.refrenceId,
+  scout.projectName,
+  scout.buildingType,
+  scout.city,
+  scout.address,
+  scout.contractorName,
+  scout.contractorNumber,
+  scout.assignedTo,
+  scout.sops,
+  scout.scoutedBy,
+  scout.projectType,
+  scout.created_at,
+  scout.pinLocation,
+  scout.status,
+  scout.updated_at,
+  scout_member.name AS scouter,
+  scout_member.role AS scouterRole,
+  (
+    SELECT
+      COUNT(ML.meetingId)
+    FROM
+      scout S
+    LEFT JOIN
+      meetings M ON S.id = M.locationId
+    LEFT JOIN
+      meeting_logs ML ON M.id = ML.meetingId
+    WHERE
+      S.sops IS NOT NULL
+      AND S.id = scout.id
+  ) AS totalMeeting,
+  (
+    SELECT
+      GROUP_CONCAT(scout_member.name ORDER BY FIELD(scout_member.id, scout.assignedTo))
+    FROM
+      scout_member
+    WHERE
+      FIND_IN_SET(scout_member.id, scout.assignedTo)
+  ) AS assignedToMember
+FROM
+  scout
+JOIN
+  scout_member ON scout.scoutedBy = scout_member.id
+WHERE
+  scout.assignedTo IS NOT NULL
+  AND FIND_IN_SET(?, scout.assignedTo)
+  AND scout.projectName LIKE ?
+`;
 
     // Add projectType filter if provided
     const queryParams = [userId, `%${search}%`, parseInt(limit), offset];
