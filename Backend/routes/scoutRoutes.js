@@ -29,7 +29,7 @@ router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
 
 router.get('/getAllotedLocation', verifyToken , scoutController.getAllotedLocations);
 router.get('/getUnAllotedLocation', verifyToken , scoutController.getUnAllotedLocations);
-
+router.get('/getScoutByID/:id', verifyToken , scoutController.getscoutsByID)
 
 router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
 router.get('/getLongAndLat', verifyToken , scoutController.getLongAndLat);
@@ -42,6 +42,9 @@ router.get('/getScoutedLocation', verifyToken , scoutController.getScoutsByUserI
 router.get('/scoutMap', scoutController.scoutMap);
 
 // router.get('/getSubAreas', scoutController.getSubAreas);
+router.put('/editScout/:id', verifyToken,s3Upload.array('files', 5),scoutController.UpdateScoutedLocation);
+
+router.delete('/deleteScout/:id',scoutController.deletScout);
 
 
 module.exports = router; 
