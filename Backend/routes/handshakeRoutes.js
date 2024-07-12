@@ -12,8 +12,8 @@ const router = express.Router();
 
 const { verifyToken } = require("../middleware/authenticate");
 
-const { requestHandShake } = require("../controllers/handshakeController");
+const { requestHandShake, acceptHandshake } = require("../controllers/handshakeController");
 router.post("/requestHandshake",verifyToken, requestHandShake);
-
+router.post('/acceptrejectHandshake',verifyToken,acceptHandshake)
 module.exports = router;
 

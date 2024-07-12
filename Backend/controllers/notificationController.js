@@ -29,6 +29,19 @@ const {
         const allReadResult = await queryRunner(allReadQuery, [userId]);
 
         const isAllRead = allReadResult[0][0].unreadCount === 0;
+        selectResult[0].map(async(notification) => {
+          if(notification?.isHandShake){
+            const data=await queryRunner(`SELECT * FROM handshake WHERE id = ?`,[notification.relevantId]);
+            if(data[0].length>0){
+              notification.handshakeData=data[0][0]
+            }
+            return notification
+            
+          }else{
+            return notification
+          }
+
+        });
         // console.log(selectResult[0].length,isAllRead)
         if (selectResult[0].length > 0) {
             res.status(200).json({
