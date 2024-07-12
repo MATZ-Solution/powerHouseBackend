@@ -716,3 +716,56 @@ exports.getMembers = async (req, res) => {
     res.status(500).send('Error fetching users');
   }
 };
+exports.statistics = async (req, res) => {
+  const { userId } = req.user;
+  try {
+    // Get the user's details
+    const selectResult = await queryRunner(selectQuery("scout_member", "id"), [userId]);
+    
+    if (selectResult.length === 0) {
+      return res.status(404).json({ message: "User Not Found" });
+    }
+
+    // Get the total number of scouted locations
+    const totalScoutedLocationsResult = await queryRunner("SELECT COUNT(*) as totalScoutedLocations FROM scout WHERE scoutedBy=?", [userId]);
+    const totalScoutedLocations = totalScoutedLocationsResult[0][0].totalScoutedLocations;
+    console.log(totalScoutedLocations);
+    // Get the total number of assigned locations
+    const totalAssignedLocationsResult = await queryRunner("SELECT COUNT(*) as totalAssignedLocations FROM scout WHERE assignedTo LIKE ?", [`%${userId}%`]);
+    const totalAssignedLocations = totalAssignedLocationsResult[0][0].totalAssignedLocations;
+    console.log(totalAssignedLocations);
+    // Get the total number of meeting logs where the user is involved
+    const meetingLogsResult = await queryRunner(`
+      SELECT 
+        COUNT(*) as totalMeetingLogs,
+        SUM(CASE WHEN startTime IS NOT NULL AND endTime IS NULL THEN 1 ELSE 0 END) as totalPendingLogs,
+        SUM(CASE WHEN endTime IS NOT NULL THEN 1 ELSE 0 END) as totalCompletedLogs,
+        SUM(CASE WHEN startTime <= NOW() AND (endTime IS NULL OR endTime >= NOW()) THEN 1 ELSE 0 END) as totalActiveLogs
+      FROM meeting_logs 
+      WHERE startedBy = ? OR members LIKE ?
+    `, [userId, `%${userId}%`]);
+
+    const { totalMeetingLogs, totalPendingLogs, totalCompletedLogs, totalActiveLogs } = meetingLogsResult[0][0];
+      console.log(meetingLogsResult);
+    res.status(200).json({
+      statusCode: 200,
+      message: "Success",
+      data: {
+       
+        totalScoutedLocations,
+        totalAssignedLocations,
+        totalMeetingLogs,
+        totalPendingLogs,
+        totalCompletedLogs,
+        totalActiveLogs
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get User Statistics",
+      error: error.message,
+    });
+  }
+};
