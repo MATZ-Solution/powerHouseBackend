@@ -20,6 +20,31 @@ const { calculateScore } = require("../helper/calculateScore.js");
 const { insertNotification } = require("../helper/insertNotification.js");
 
 
+exports.getscoutsByID = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("this is params id: ", id)
+    let query = `SELECT * from scout where id= ${id}`
+    const selectResult = await queryRunner(query);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({data: selectResult[0], message: "No Scout Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Scout",
+      error: error.message,
+    });
+  }
+};
+
+
 exports.scout = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -61,7 +86,7 @@ exports.scout = async (req, res) => {
 
     // Initialize scout member IDs array
     let scoutMemberIDs = [];
-    let sopIds=[];
+    let sopIds = [];
 
     // Define criteria for scoring
     const criteria = { city, area: normalizedArea, projectType, buildingType };
@@ -117,7 +142,7 @@ exports.scout = async (req, res) => {
         userId,
         assignedTo,
         type,
-        sops
+        sops,
       ];
     } else {
       insertQuery = `
@@ -229,7 +254,7 @@ exports.getscouts = async (req, res) => {
     let query = `SELECT s.id, s.projectType, s.projectName, s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy, sm.name as scoutedBy, s.created_at
     FROM scout s
     LEFT JOIN scout_member sm ON s.scoutedBy = sm.id
-    ORDER BY s.id DESC`
+    ORDER BY s.id DESC`;
 
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
@@ -239,7 +264,9 @@ exports.getscouts = async (req, res) => {
         data: selectResult[0],
       });
     } else {
-      res.status(200).json({data: selectResult[0], message: "Scout Data Not Found" });
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "Scout Data Not Found" });
     }
   } catch (error) {
     return res.status(500).json({
@@ -732,25 +759,25 @@ exports.getAllotedLocations = async (req, res) => {
 };
 
 exports.getUnAllotedLocations = async (req, res) => {
-
   try {
-      let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
+    let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
       FROM scout s
      join scout_member sm 
       on s.scoutedBy = sm.id
       WHERE s.assignedTo IS NULL order by id desc`;
 
-      let selectResult = await queryRunner(query1);
-      if (selectResult[0].length > 0) {
-        res.status(200).json({
-          statusCode: 200,
-          message: "Success",
-          data: selectResult[0],
-        });
-      } else {
-        res.status(200).json({data:selectResult[0], message: "No Location Found" });
-      }
-    
+    let selectResult = await queryRunner(query1);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "No Location Found" });
+    }
   } catch (error) {
     return res.status(500).json({
       statusCode: 500,
@@ -835,12 +862,10 @@ exports.updateScoutMember = async (req, res) => {
         id: insertResult[0].insertId,
       });
     } else {
-      return res
-        .status(500)
-        .json({
-          statusCode: 500,
-          message: "Failed to Update User",
-        });
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Update User",
+      });
     }
   } catch (error) {
     return res.status(500).json({
@@ -852,12 +877,10 @@ exports.updateScoutMember = async (req, res) => {
 };
 // ###################### UPDATE SCOUTE MEMBER End #######################################
 
-
-
 exports.getAllocatedLocation = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { limit=5, page, search = "", projectType } = req.query; // Default search to an empty string
+    const { limit = 5, page, search = "", projectType } = req.query; // Default search to an empty string
     const offset = (page - 1) * limit;
     // // console.log("this is limit", req.query);
     // Base query
@@ -900,12 +923,14 @@ exports.getAllocatedLocation = async (req, res) => {
     // Add projectType filter if provided
     const queryParams = [userId, `%${search}%`, parseInt(limit), offset];
     if (projectType && projectType !== "All") {
-      if(projectType !== "Market"){
+      if (projectType !== "Market") {
         query += ` AND scout.buildingType = ?`;
         queryParams.splice(2, 0, projectType);
-      }else{query += ` AND scout.projectType = ?`;
-      queryParams.splice(2, 0, projectType);}
-       // Insert projectType at the correct position
+      } else {
+        query += ` AND scout.projectType = ?`;
+        queryParams.splice(2, 0, projectType);
+      }
+      // Insert projectType at the correct position
     }
 
     query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
@@ -913,7 +938,7 @@ exports.getAllocatedLocation = async (req, res) => {
     const selectResult = await queryRunner(query, queryParams);
     // // console.log("this is allocated location", selectResult[0]);
     if (selectResult[0].length > 0) {
-      const locationFiles=[];
+      const locationFiles = [];
       for (const location of selectResult[0]) {
         const filesQuery = `SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?`;
         const filesResult = await queryRunner(filesQuery, [location.id]);
@@ -922,25 +947,21 @@ exports.getAllocatedLocation = async (req, res) => {
         location.files = filesResult[0];
         // // console.log("this is files", location);
 
-
-        if(location.sops){
+        if (location.sops) {
           // // console.log("this is ", location.sops);
           const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
-        const sopResult = await queryRunner(sopQuery, [location.sops]);
-        location.sops = sopResult[0];
+          const sopResult = await queryRunner(sopQuery, [location.sops]);
+          location.sops = sopResult[0];
         }
-
-        
       }
       // console.log("this is location files", selectResult[0]
-      
-res.status(200).json({
-          statusCode: 200,
-          message: "Success",
-          data: selectResult[0],
-        });
-    }
-    else{
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
       res.status(200).json({
         statusCode: 200,
         message: "Success",
@@ -1001,12 +1022,9 @@ exports.getAllocatedLocationByLocationId = async (req, res) => {
     } else {
       res.status(404).json({ message: "Location Not Found" });
     }
-  } catch (error) {
-    
-  }
-}
+  } catch (error) {}
+};
 exports.getLongAndLat = async (req, res) => {
-
   try {
     // const query = `SELECT id, buildingType, pinLocation FROM scout`;
     let selectResult = await queryRunner(selectQuery("scout"));
@@ -1029,13 +1047,12 @@ exports.getLongAndLat = async (req, res) => {
   }
 };
 
-
 exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { limit=5, page, search = "", projectType,locationId } = req.query;
+    const { limit = 5, page, search = "", projectType, locationId } = req.query;
     const offset = (page - 1) * limit;
-    console.log("this is limit", req.query)
+    console.log("this is limit", req.query);
     // now we have to select the scouts based on scoutedById with all the related info from all the tables
     let query = `
     SELECT
@@ -1056,81 +1073,87 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
     FROM
       scout
 `;
-      let queryParams = [];
-      if(locationId){
-        query += ` WHERE scout.id = ?`;
-        queryParams.push(locationId);
-      }
-      else{
-        query += ` WHERE scout.scoutedBy = ?`;
-        queryParams.push(userId);
-      }
-      if(search){
-        query += ` AND scout.projectName LIKE ?`;
-        queryParams.push(`%${search}%`);
-      }
-      if(projectType){
-        if(projectType==="Market"){query += ` AND scout.projectType = ?`;
-        queryParams.push(projectType);}
-        else if(projectType!=="All"){
-          query += ` AND scout.buildingType = ?`;
-          queryParams.push(projectType);
-        }
-        
-      }
-      query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
-      queryParams.push(parseInt(limit), offset);
-      // console.log("this is query", query, queryParams);
-      const selectResult = await queryRunner(query, queryParams);
-      // console.log("this is allocated location", selectResult[0]);
-      if (selectResult[0].length > 0) {
-        try {
-            await Promise.all(
-                selectResult[0].map(async (location) => {
-                    const meetingandmeetinglogq = 'SELECT meetings.id, meeting_logs.id, meeting_logs.startTime, meeting_logs.endTime, meeting_logs.inProgress FROM meetings JOIN meeting_logs ON meetings.id = meeting_logs.meetingId WHERE meetings.locationId = ?';
-                    const meetingandmeetinglog = await queryRunner(meetingandmeetinglogq, [location.id]);
-                    location.meeting = meetingandmeetinglog[0];
-                    
-                    const filesQuery = 'SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?';
-                    const filesResult = await queryRunner(filesQuery, [location.id]);
-                    console.log("this is files", filesResult[0]);
-                    location.files = filesResult[0];
-                    
-                    if (location.sops) {
-                        const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
-                        const sopResult = await queryRunner(sopQuery, [location.sops]);
-                        location.sops = sopResult[0];
-                    }
-                    
-                    if (location.assignedTo) {
-                        const assignedToQuery = 'SELECT id, name, email, phoneNumber,role As scouterRole FROM scout_member WHERE id IN (?)';
-                        const assignedToResult = await queryRunner(assignedToQuery, [location.assignedTo]);
-                        location.assignedTo = assignedToResult[0];
-                    }
-                })
-            );
-    
-            // console.log("this is allocated location", selectResult[0][0].assignedTo);
-            res.status(200).json({
-                statusCode: 200,
-                message: "Success",
-                data: selectResult[0],
-            });
-        } catch (error) {
-            console.error("Error processing locations", error);
-            res.status(500).json({
-                statusCode: 500,
-                message: "Internal Server Error",
-            });
-        }
+    let queryParams = [];
+    if (locationId) {
+      query += ` WHERE scout.id = ?`;
+      queryParams.push(locationId);
+    } else {
+      query += ` WHERE scout.scoutedBy = ?`;
+      queryParams.push(userId);
     }
-     else {
+    if (search) {
+      query += ` AND scout.projectName LIKE ?`;
+      queryParams.push(`%${search}%`);
+    }
+    if (projectType) {
+      if (projectType === "Market") {
+        query += ` AND scout.projectType = ?`;
+        queryParams.push(projectType);
+      } else if (projectType !== "All") {
+        query += ` AND scout.buildingType = ?`;
+        queryParams.push(projectType);
+      }
+    }
+    query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
+    queryParams.push(parseInt(limit), offset);
+    // console.log("this is query", query, queryParams);
+    const selectResult = await queryRunner(query, queryParams);
+    // console.log("this is allocated location", selectResult[0]);
+    if (selectResult[0].length > 0) {
+      try {
+        await Promise.all(
+          selectResult[0].map(async (location) => {
+            const meetingandmeetinglogq =
+              "SELECT meetings.id, meeting_logs.id, meeting_logs.startTime, meeting_logs.endTime, meeting_logs.inProgress FROM meetings JOIN meeting_logs ON meetings.id = meeting_logs.meetingId WHERE meetings.locationId = ?";
+            const meetingandmeetinglog = await queryRunner(
+              meetingandmeetinglogq,
+              [location.id]
+            );
+            location.meeting = meetingandmeetinglog[0];
+
+            const filesQuery =
+              "SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?";
+            const filesResult = await queryRunner(filesQuery, [location.id]);
+            console.log("this is files", filesResult[0]);
+            location.files = filesResult[0];
+
+            if (location.sops) {
+              const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
+              const sopResult = await queryRunner(sopQuery, [location.sops]);
+              location.sops = sopResult[0];
+            }
+
+            if (location.assignedTo) {
+              const assignedToQuery =
+                "SELECT id, name, email, phoneNumber,role As scouterRole FROM scout_member WHERE id IN (?)";
+              const assignedToResult = await queryRunner(assignedToQuery, [
+                location.assignedTo,
+              ]);
+              location.assignedTo = assignedToResult[0];
+            }
+          })
+        );
+
+        // console.log("this is allocated location", selectResult[0][0].assignedTo);
         res.status(200).json({
           statusCode: 200,
           message: "Success",
-          data: [],
+          data: selectResult[0],
+        });
+      } catch (error) {
+        console.error("Error processing locations", error);
+        res.status(500).json({
+          statusCode: 500,
+          message: "Internal Server Error",
         });
       }
+    } else {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: [],
+      });
+    }
   } catch (error) {
     console.error("Error fetching allocated locations:", error);
     return res.status(500).json({
@@ -1141,7 +1164,6 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
   }
 };
 // ###################### GET LONGITUDE AND LATITUDE END #######################################
-
 
 // ###################### GET LONGITUDE AND LATITUDE START #######################################
 
@@ -1170,9 +1192,6 @@ exports.getScoutReport = async (req, res) => {
 
 // ###################### GET LONGITUDE AND LATITUDE END #######################################
 
-
-
-
 // ###################### scoutMap #######################################
 exports.scoutMap = async (req, res) => {
   try {
@@ -1181,14 +1200,13 @@ exports.scoutMap = async (req, res) => {
       return res.status(200).json({
         statusCode: 200,
         message: `Success`,
-        data: selectResult[0]
+        data: selectResult[0],
       });
-    }else{
+    } else {
       return res.status(200).json({
         message: `No data Found`,
       });
     }
-    
   } catch (error) {
     return res.status(500).json({
       message: "Failed to Get Scouts",
@@ -1197,3 +1215,93 @@ exports.scoutMap = async (req, res) => {
   }
 };
 // ###################### scoutMap #######################################
+
+// ###################### EDIT SCOUT LOCATION #######################################
+exports.UpdateScoutedLocation = async (req, res) => {
+  const { id } = req.params;
+  const {projectName,
+    type,
+    size,
+    city,
+    area,
+    block,
+    address,
+    contractorName,
+    contractorNumber,
+    buildingType
+     } = req.body;
+  console.log("this is params id: ", id);
+  console.log("this is req.body: ", req.body);
+
+  let query = `
+  UPDATE scout set 
+  projectName=?,
+  type=?,
+  size=?,
+  city=?,
+  area=?,
+  block=?,
+  address=?,
+  contractorName=?,
+  contractorNumber=?,
+  buildingType=?
+  where id = ${id}`;
+  try {
+    let insertResult = await queryRunner(query, [
+      projectName,
+      type,
+      size,
+      city,
+      area,
+      block,
+      address,
+      contractorName,
+      contractorNumber,
+      buildingType,
+    ]);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Successfully Edit Scout",
+        id: insertResult[0].insertId,
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Update Scout",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+exports.deletScout = async (req, res) => {
+  const { id } = req.params;
+  let query = `DELETE FROM scout where id = ${id}`;
+  try {
+    let insertResult = await queryRunner(query);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Successfully Delete Scout",
+        id: insertResult[0].insertId,
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Delete Scout",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};

@@ -56,8 +56,17 @@ const {
     } = req.body;
     const checkAlreadyExist = await queryRunner(selectQuery("meetings","locationId"),[locationId]);
     if (checkAlreadyExist[0].length > 0) {
-      const insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
-      const insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members,meetingLocation,meetingTopic]);
+      let insertInMeetingLog;
+      let insertInMeetingLogResult;
+      if(meetingTopic){
+        insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
+        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members,meetingLocation,meetingTopic]);
+  
+      }else{
+        insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;
+        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members,meetingLocation]);
+  
+      }
       if (insertInMeetingLogResult[0].affectedRows > 0) {
         return res.status(200).json({
           statusCode: 200,
@@ -76,8 +85,16 @@ const {
     const insertQuery = `INSERT INTO meetings (locationId,assignedTo) VALUES (?,?)`;
     const insertResult = await queryRunner(insertQuery, [locationId,members]);
     if (insertResult[0].affectedRows > 0) {
-      const createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;;
-      const createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members,meetingLocation,meetingTopic]);
+      let createLogQuery;
+      let createLogResult;
+      if(meetingTopic){
+        createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;;
+        createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members,meetingLocation,meetingTopic]);
+  
+      }else{
+        createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;;
+        createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members,meetingLocation]);
+      }
       if (createLogResult[0].affectedRows > 0) {
         return res.status(200).json({
           statusCode: 200,
