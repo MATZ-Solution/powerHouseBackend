@@ -6,6 +6,7 @@ const {
   insertCityQuery,
   insertAreaQuery,
   insertSubAreaQuery,
+  getAllAloctedLocationQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
@@ -736,50 +737,18 @@ exports.getSubAreas = async (req, res) => {
 
 exports.getAllotedLocations = async (req, res) => {
   try {
-    let query = `
-      SELECT 
-      scout.id,
-      scout.refrenceId,
-      scout.projectName,
-      scout.buildingType,
-      scout.city,
-      scout.address,
-      scout.contractorName,
-      scout.contractorNumber,
-      scout.assignedTo,
-      scout.scoutedBy,
-      SM1.name AS scouter,
-    (
-        SELECT 
-        GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo))
-        FROM 
-        scout_member SM2 
-        WHERE 
-        FIND_IN_SET(SM2.id, scout.assignedTo)
-    )   AS assignedToMember
-      FROM
-      scout scout
-      JOIN
-      scout_member SM1 ON SM1.id = scout.scoutedBy
-      WHERE
-      scout.assignedTo IS NOT NULL
-      GROUP BY
-      scout.id
-      HAVING
-      assignedToMember IS NOT NULL order by id desc`;
 
-    let selectResult = await queryRunner(query);
-    if (selectResult[0].length > 0) {
-      res.status(200).json({
-        statusCode: 200,
-        message: "Success",
-        data: selectResult[0],
-      });
-    } else {
-      res
-        .status(200)
-        .json({ data: selectResult[0], message: "No Location Found" });
-    }
+      let selectResult = await queryRunner(getAllAloctedLocationQuery);
+      if (selectResult[0].length > 0) {
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0],
+        });
+      } else {
+        res.status(200).json({data: selectResult[0], message: "No Location Found" });
+      }
+    
   } catch (error) {
     return res.status(500).json({
       statusCode: 500,
