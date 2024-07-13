@@ -71,19 +71,32 @@ exports.acceptHandshake = async (req, res) => {
   
       const handshake = rows[0];
       const { acceptedBy, rejectedBy } = handshake;
-      console.log('Handshake:', handshake, 'Accepted By:', acceptedBy, 'Rejected By:', rejectedBy);
+      console.log('Accepted By:', acceptedBy, 'Rejected By:', rejectedBy);
       // Parse accepted and rejected lists
       const acceptedByList = acceptedBy ? acceptedBy?.split(',').map(Number) : [];
       const rejectedByList = rejectedBy ? rejectedBy?.split(',').map(Number) : [];
-  
+            
       if (action === 'accept' && acceptedByList.includes(userId)) {
+        console.log(action === 'accept' ,acceptedByList.includes(userId))
         return res.status(200).json({ message: 'User already accepted' });
       }
   
       if (action === 'reject' && rejectedByList.includes(userId)) {
+        console.log9action === 'reject' , rejectedByList.includes(userId)
         return res.status(200).json({ message: 'User already rejected' });
       }
+      if (action === 'accept' && rejectedByList.includes(userId)) {
+        // Remove user from rejected list
+        const index = rejectedByList.indexOf(userId);
+        rejectedByList.splice(index, 1);
+
+      }
   
+      if (action === 'reject' && acceptedByList.includes(userId)) {
+        // Remove user from accepted list
+        const index = acceptedByList.indexOf(userId);
+        acceptedByList.splice(index, 1);
+      }
       // Update lists
       if (action === 'accept') {
         acceptedByList.push(userId);
@@ -94,7 +107,7 @@ exports.acceptHandshake = async (req, res) => {
       // Convert lists back to comma-separated strings
       const updatedAcceptedBy = acceptedByList.join(',');
       const updatedRejectedBy = rejectedByList.join(',');
-  
+      console.log(updatedAcceptedBy,updatedRejectedBy)
       // Update the database
       const update=await queryRunner(
         'UPDATE handshake SET acceptedBy = ?, rejectedBy = ?, updated_at = NOW() WHERE id = ?',
