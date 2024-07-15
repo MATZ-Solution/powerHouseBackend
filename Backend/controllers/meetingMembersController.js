@@ -279,16 +279,17 @@ const {
             scout.address, 
             scout.contractorName, 
             scout.contractorNumber,
-            scout.pinLocation
+            scout.pinLocation,
+            meeting_logs.id as meetingLogId
         FROM 
             meetings 
         JOIN 
             scout ON meetings.locationId = scout.id 
+        JOIN 
+            meeting_logs ON meeting_logs.meetingId = meetings.id
         WHERE 
-            FIND_IN_SET(?, meetings.assignedTo)
+            FIND_IN_SET(?, meeting_logs.members)
             ${searchCondition}
-      
-
       `;
   
       // Build the parameters array
