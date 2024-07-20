@@ -49,4 +49,20 @@ router.put('/editScout/:id', verifyToken,s3Upload.array('files', 5),scoutControl
 router.delete('/deleteScout/:id',scoutController.deletScout);
 
 
+
+
+router.post('/AddArchitecture', verifyToken , scoutController.AddArchitecture);
+router.post('/AddArchitectureCSV', verifyToken , uploadCSV.single('file'), scoutController.AddArchitectureCSV);
+router.post('/AddBuilder', verifyToken , scoutController.AddBuilder);
+router.post('/AddBuilderCSV', verifyToken , uploadCSV.single('file'), scoutController.AddBuilderCSV);
+router.post('/AddElectrician', verifyToken , scoutController.AddElectrician);
+router.post('/AddElectricianCSV', verifyToken , uploadCSV.single('file'), scoutController.AddElectricianCSV);
+router.get('/getArchitecture', verifyToken ,scoutController.getArchitecture);
+router.get('/getBuilder', verifyToken ,scoutController.getBuilder);
+router.get('/getElectricians', verifyToken ,scoutController.getElectrician);
+
+
+
+
+
 module.exports = router; 
