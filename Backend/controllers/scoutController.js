@@ -1185,7 +1185,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
 
 // ###################### GET LONGITUDE AND LATITUDE START #######################################
 
-exports.getScoutReport = async (req, res) => {
+exports.getLatAndLongMarker = async (req, res) => {
   try {
     const query = `SELECT id, buildingType, pinLocation FROM scout`;
     let selectResult = await queryRunner(query);

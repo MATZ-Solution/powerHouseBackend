@@ -54,17 +54,18 @@ const {
         meetingTopic,
         startTime
     } = req.body;
+    const {userId} = req.user;
     const checkAlreadyExist = await queryRunner(selectQuery("meetings","locationId"),[locationId]);
     if (checkAlreadyExist[0].length > 0) {
       let insertInMeetingLog;
       let insertInMeetingLogResult;
       if(meetingTopic){
         insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
-        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members,meetingLocation,meetingTopic]);
+        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members+','+userId.toString(),meetingLocation,meetingTopic]);
   
       }else{
         insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;
-        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members,meetingLocation]);
+        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members+','+userId.toString(),meetingLocation]);
   
       }
       if (insertInMeetingLogResult[0].affectedRows > 0) {
@@ -89,11 +90,11 @@ const {
       let createLogResult;
       if(meetingTopic){
         createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;;
-        createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members,meetingLocation,meetingTopic]);
+        createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members+','+userId.toString(),meetingLocation,meetingTopic]);
   
       }else{
         createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;;
-        createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members,meetingLocation]);
+        createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members+','+userId.toString(),meetingLocation]);
       }
       if (createLogResult[0].affectedRows > 0) {
         return res.status(200).json({
@@ -279,16 +280,17 @@ const {
             scout.address, 
             scout.contractorName, 
             scout.contractorNumber,
-            scout.pinLocation
+            scout.pinLocation,
+            meeting_logs.id as meetingLogId
         FROM 
             meetings 
         JOIN 
             scout ON meetings.locationId = scout.id 
+        JOIN 
+            meeting_logs ON meeting_logs.meetingId = meetings.id
         WHERE 
-            FIND_IN_SET(?, meetings.assignedTo)
+            FIND_IN_SET(?, meeting_logs.members)
             ${searchCondition}
-      
-
       `;
   
       // Build the parameters array

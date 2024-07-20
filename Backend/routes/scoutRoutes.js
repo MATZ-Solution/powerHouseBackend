@@ -27,13 +27,15 @@ router.get('/getCities', verifyToken , scoutController.getCities);
 router.get('/getAreas', verifyToken , scoutController.getAreas);
 router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
 
+
 router.get('/getAllotedLocation', verifyToken , scoutController.getAllotedLocations);
 router.get('/getUnAllotedLocation', verifyToken , scoutController.getUnAllotedLocations);
 router.get('/getScoutByID/:id', verifyToken , scoutController.getscoutsByID)
 
 router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
 router.get('/getLongAndLat', verifyToken , scoutController.getLongAndLat);
-// router.get('/getScoutReport', verifyToken , scoutController.getLongAndLat);
+
+router.get('/getLatAndLongMarker', verifyToken , scoutController.getLatAndLongMarker);
 
 
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
