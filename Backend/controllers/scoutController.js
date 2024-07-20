@@ -1690,4 +1690,27 @@ exports.getBuilder = async (req, res) => {
 };
 // ############################# Get Architecture ##########################################
 
+// ############################# Get Electrician ##########################################
+exports.getElectrician = async (req, res) => {
+  try {
+    const selectResult = await queryRunner(selectQuery("Electricians"));
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Success`,
+        data: selectResult[0],
+      });
+    } else {
+      return res.status(200).json({
+        message: `No data Found`,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to Get Electricians Members",
+      message: error.message,
+    });
+  }
+};
+// ############################# Get Electrician ##########################################
 // ############################################################################################################################

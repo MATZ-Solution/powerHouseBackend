@@ -59,6 +59,7 @@ router.post('/AddElectrician', verifyToken , scoutController.AddElectrician);
 router.post('/AddElectricianCSV', verifyToken , uploadCSV.single('file'), scoutController.AddElectricianCSV);
 router.get('/getArchitecture', verifyToken ,scoutController.getArchitecture);
 router.get('/getBuilder', verifyToken ,scoutController.getBuilder);
+router.get('/getElectricians', verifyToken ,scoutController.getElectrician);
 
 
 
