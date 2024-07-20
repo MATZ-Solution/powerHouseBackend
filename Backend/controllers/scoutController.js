@@ -1640,4 +1640,54 @@ exports.AddElectricianCSV = async (req, res) => {
   }
 };
 // ############################# Add Electrician using pdf END ##########################################
+
+
+// ############################# Get Architecture ##########################################
+exports.getArchitecture = async (req, res) => {
+  try {
+    const selectResult = await queryRunner(selectQuery("Architecture"));
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Success`,
+        data: selectResult[0],
+      });
+    } else {
+      return res.status(200).json({
+        message: `No data Found`,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to Get Architecture Members",
+      message: error.message,
+    });
+  }
+};
+// ############################# Get Architecture ##########################################
+
+// ############################# Get Architecture ##########################################
+exports.getBuilder = async (req, res) => {
+  try {
+    const selectResult = await queryRunner(selectQuery("Builders"));
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Success`,
+        data: selectResult[0],
+      });
+    } else {
+      return res.status(200).json({
+        message: `No data Found`,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to Get Builders Members",
+      message: error.message,
+    });
+  }
+};
+// ############################# Get Architecture ##########################################
+
 // ############################################################################################################################
