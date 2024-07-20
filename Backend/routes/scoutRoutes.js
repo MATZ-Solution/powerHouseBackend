@@ -35,7 +35,7 @@ router.get('/getScoutByID/:id', verifyToken , scoutController.getscoutsByID)
 router.get('/getSingleScoutUser/:userID', verifyToken , scoutController.getSingleScoutMember);
 router.get('/getLongAndLat', verifyToken , scoutController.getLongAndLat);
 
-router.get('/getLatAndLongMarker', verifyToken , scoutController.getLatAndLongMarker);
+router.get('/getLatAndLongMarker/:id', verifyToken , scoutController.getLatAndLongMarker);
 
 
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);

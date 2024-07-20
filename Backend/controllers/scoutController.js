@@ -1183,8 +1183,9 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
 // ###################### GET LONGITUDE AND LATITUDE START #######################################
 
 exports.getLatAndLongMarker = async (req, res) => {
+  const { id } = req.params
   try {
-    const query = `SELECT id, buildingType, pinLocation FROM scout`;
+    const query = `SELECT id, buildingType, pinLocation, scoutedBy FROM scout where scoutedBy = ${id}`;
     let selectResult = await queryRunner(query);
     // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
