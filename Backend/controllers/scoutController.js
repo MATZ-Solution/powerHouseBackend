@@ -6,7 +6,10 @@ const {
   insertCityQuery,
   insertAreaQuery,
   insertSubAreaQuery,
-  getAllAloctedLocationQuery
+  getAllAloctedLocationQuery,
+  insertArchitectureQuery,
+  insertBuilderQuery,
+  insertElectricianQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
@@ -1320,3 +1323,321 @@ exports.deletScout = async (req, res) => {
     });
   }
 };
+
+
+// ############################################################################################################################
+
+// ###################### Add Architecture #######################################
+exports.AddArchitecture = async (req, res) => {
+  const { architectureName, architecturePhoneNumber } = req.body;
+  try {
+    const selectResult = await queryRunner(selectQuery("Architecture", "architectureName"), [
+      architectureName,
+    ]);
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Architecture is already exist ${architectureName}`,
+      });
+    }
+    const insertResult = await queryRunner(insertArchitectureQuery, [architectureName, architecturePhoneNumber]);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        message: "Architecture added successfully",
+      });
+    } else {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Failed to add Architecture",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to add Architecture",
+      message: error.message,
+    });
+  }
+};
+// ###################### Add architecture #######################################
+
+// ############################# Add Architecture using pdf Start ##########################################
+exports.AddArchitectureCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "No file uploaded or file extension is not valid" });
+    }
+
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname);
+
+    if (ext !== ".csv") {
+      // Remove the invalid file
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error("Failed to delete invalid file:", filePath);
+        }
+      });
+      return res.status(400).json({ message: "File extension is not valid" });
+    }
+
+    const Architectureies = [];
+
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        Architectureies.push(row);
+      })
+      .on("end", async () => {
+        try {
+          // Process each city in the CSV file
+          for (const Architecture of Architectureies) {
+            const ArchitectureName = Architecture.ArchitectureName; 
+            const ArchitectureNumber = Architecture.ArchitectureNumber; 
+            const selectResult = await queryRunner(
+              selectQuery("Architecture", "architectureName"),
+              [ArchitectureName]
+            );
+
+            if (selectResult[0].length === 0) {
+              await queryRunner(insertArchitectureQuery, [ArchitectureName,ArchitectureNumber]);
+            }
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Architecture processed successfully" });
+        } catch (error) {
+          return res.status(500).json({
+            message: "Failed to process Architecture",
+            error: error.message,
+          });
+        } finally {
+          // Clean up the uploaded file
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error("Failed to delete file:", filePath);
+            }
+          });
+        }
+      });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to process file", error: error.message });
+  }
+};
+// ############################# Add Architecture using pdf END ##########################################
+
+
+// ###################### Add Builder #######################################
+exports.AddBuilder = async (req, res) => {
+  const { builderName, builderPhoneNumber } = req.body;
+  try {
+    const selectResult = await queryRunner(selectQuery("Builders", "BuilderName"), [
+      builderName,
+    ]);
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Builder is already exist ${builderName}`,
+      });
+    }
+    const insertResult = await queryRunner(insertBuilderQuery, [builderName, builderPhoneNumber]);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        message: "Builder added successfully",
+      });
+    } else {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Failed to add Builder",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to add Builder",
+      message: error.message,
+    });
+  }
+};
+// ###################### Add Builder #######################################
+
+// ############################# Add Builder using pdf Start ##########################################
+exports.AddBuilderCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "No file uploaded or file extension is not valid" });
+    }
+
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname);
+
+    if (ext !== ".csv") {
+      // Remove the invalid file
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error("Failed to delete invalid file:", filePath);
+        }
+      });
+      return res.status(400).json({ message: "File extension is not valid" });
+    }
+
+    const Builders = [];
+
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        Builders.push(row);
+      })
+      .on("end", async () => {
+        try {
+          // Process each city in the CSV file
+          for (const Builder of Builders) {
+            const BuilderName = Builder.BuilderName; 
+            const BuilderNumber = Builder.BuilderNumber; 
+            const selectResult = await queryRunner(
+              selectQuery("Builders", "BuilderName"),
+              [BuilderName]
+            );
+
+            if (selectResult[0].length === 0) {
+              await queryRunner(insertBuilderQuery, [BuilderName,BuilderNumber]);
+            }
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Builder processed successfully" });
+        } catch (error) {
+          return res.status(500).json({
+            message: "Failed to process Builder",
+            error: error.message,
+          });
+        } finally {
+          // Clean up the uploaded file
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error("Failed to delete file:", filePath);
+            }
+          });
+        }
+      });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to process file", error: error.message });
+  }
+};
+// ############################# Add Builder using pdf END ##########################################
+
+
+// ###################### Add Electrician #######################################
+exports.AddElectrician = async (req, res) => {
+  const { electricianName, electricianPhoneNumber } = req.body;
+  try {
+    const selectResult = await queryRunner(selectQuery("Electricians", "electricianName"), [
+      electricianName,
+    ]);
+    if (selectResult[0].length > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: `Electrician is already exist ${electricianName}`,
+      });
+    }
+    const insertResult = await queryRunner(insertElectricianQuery, [electricianName, electricianPhoneNumber]);
+    if (insertResult[0].affectedRows > 0) {
+      return res.status(200).json({
+        message: "Electrician added successfully",
+      });
+    } else {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Failed to add Electrician",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to add Electrician",
+      message: error.message,
+    });
+  }
+};
+// ###################### Add Electrician #######################################
+
+// ############################# Add Electrician using pdf Start ##########################################
+exports.AddElectricianCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "No file uploaded or file extension is not valid" });
+    }
+
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname);
+
+    if (ext !== ".csv") {
+      // Remove the invalid file
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error("Failed to delete invalid file:", filePath);
+        }
+      });
+      return res.status(400).json({ message: "File extension is not valid" });
+    }
+
+    const Electricians = [];
+
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        Electricians.push(row);
+      })
+      .on("end", async () => {
+        try {
+          // Process each city in the CSV file
+          for (const Electrician of Electricians) {
+            const ElectricianName = Electrician.ElectricianName; 
+            const ElectricianNumber = Electrician.ElectricianNumber; 
+            const selectResult = await queryRunner(
+              selectQuery("Electricians", "ElectricianName"),
+              [ElectricianName]
+            );
+
+            if (selectResult[0].length === 0) {
+              await queryRunner(insertElectricianQuery, [ElectricianName,ElectricianNumber]);
+            }
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Electrician processed successfully" });
+        } catch (error) {
+          return res.status(500).json({
+            message: "Failed to process Electrician",
+            error: error.message,
+          });
+        } finally {
+          // Clean up the uploaded file
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error("Failed to delete file:", filePath);
+            }
+          });
+        }
+      });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to process file", error: error.message });
+  }
+};
+// ############################# Add Electrician using pdf END ##########################################
+// ############################################################################################################################
