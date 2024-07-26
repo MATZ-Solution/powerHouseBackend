@@ -51,6 +51,7 @@ exports.getscoutsByID = async (req, res) => {
 exports.scout = async (req, res) => {
   try {
     const { userId } = req.user;
+    console.log("this is userId: ", userId)
     const {
       projectName,
       projectType,
@@ -1042,6 +1043,7 @@ exports.getAllocatedLocationByLocationId = async (req, res) => {
     }
   } catch (error) {}
 };
+
 exports.getLongAndLat = async (req, res) => {
   try {
     // const query = `SELECT id, buildingType, pinLocation FROM scout`;
