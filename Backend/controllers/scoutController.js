@@ -64,6 +64,9 @@ exports.scout = async (req, res) => {
       contractorName,
       contractorNumber,
       type,
+      Architectures,
+      Builders,
+      Electricians
     } = req.body;
 
     // // console.log("Request body:", req.body);
@@ -126,8 +129,8 @@ exports.scout = async (req, res) => {
       insertQuery = `
         INSERT INTO scout (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type, sops
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?,?)`;
+          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type, sops,Architectures,Builders,Electricians
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?,?,?,?,?)`;
       queryParams = [
         projectName,
         projectType,
@@ -146,13 +149,16 @@ exports.scout = async (req, res) => {
         assignedTo,
         type,
         sops,
+        Architectures,
+        Builders,
+        Electricians,
       ];
     } else {
       insertQuery = `
         INSERT INTO scout (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-          contractorNumber, status, created_at, updated_at, scoutedBy, type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)`;
+          contractorNumber, status, created_at, updated_at, scoutedBy, type,Architectures,Builders,Electricians
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?,?,?,?)`;
       queryParams = [
         projectName,
         projectType,
@@ -169,6 +175,9 @@ exports.scout = async (req, res) => {
         currentDate,
         userId,
         type,
+        Architectures,
+        Builders,
+        Electricians
       ];
     }
 
@@ -254,7 +263,7 @@ exports.scout = async (req, res) => {
 exports.getscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    let query = `SELECT s.id, s.projectType, s.projectName,s.size, s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,s.Architectures,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
+    let query = `SELECT s.id, s.projectType, s.projectName,s.size, s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,ar.architectureName, ar.architectureNumber, b.builderName, b.builderNumber, e.electricianName, e.electricianNumber ,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN Architecture AS ar on s.Architectures = ar.id LEFT JOIN Builders AS b on s.Builders = b.id LEFT JOIN Electricians AS e on s.Electricians = e.id LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
 
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
