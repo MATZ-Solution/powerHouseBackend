@@ -9,7 +9,8 @@ const {
   getAllAloctedLocationQuery,
   insertArchitectureQuery,
   insertBuilderQuery,
-  insertElectricianQuery
+  insertElectricianQuery,
+  updateScouteStatusQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
@@ -1323,7 +1324,6 @@ exports.deletScout = async (req, res) => {
 };
 
 
-// ############################################################################################################################
 
 // ###################### Add Architecture #######################################
 exports.AddArchitecture = async (req, res) => {
@@ -1712,4 +1712,33 @@ exports.getElectrician = async (req, res) => {
 };
 // ############################# Get Electrician ##########################################
 
-// ############################################################################################################################
+// ###################### UPDATE SCOUTE Status End #######################################
+
+exports.updateScoutStatus = async (req, res) => {
+  const { scoutId, status } = req.body;
+  try {
+    const Result = await queryRunner(updateScouteStatusQuery, [
+      status,
+      scoutId,
+    ]);
+    if (Result[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Successfully Update Scout Status",
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Update Scout Status",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// ###################### UPDATE SCOUTE Status End #######################################

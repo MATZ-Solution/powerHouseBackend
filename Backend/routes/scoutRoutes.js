@@ -60,6 +60,8 @@ router.post('/AddElectricianCSV', verifyToken , uploadCSV.single('file'), scoutC
 router.get('/getArchitecture', verifyToken ,scoutController.getArchitecture);
 router.get('/getBuilder', verifyToken ,scoutController.getBuilder);
 router.get('/getElectricians', verifyToken ,scoutController.getElectrician);
+router.put('/updateScouteStatus', verifyToken , scoutController.updateScoutStatus);
+// router.put('/updateScouteStatus', scoutController.updateScoutStatus);
 
 
 
