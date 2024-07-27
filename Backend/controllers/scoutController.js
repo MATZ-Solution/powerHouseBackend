@@ -9,7 +9,8 @@ const {
   getAllAloctedLocationQuery,
   insertArchitectureQuery,
   insertBuilderQuery,
-  insertElectricianQuery
+  insertElectricianQuery,
+  updateScouteStatusQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
