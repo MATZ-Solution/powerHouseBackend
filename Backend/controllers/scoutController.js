@@ -255,7 +255,7 @@ exports.scout = async (req, res) => {
 exports.getscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    let query = `SELECT s.id, s.projectType, s.projectName,s.size, s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,s.Architectures,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
+    let query = `SELECT s.id, s.projectType, s.projectName,s.size,s.status,s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,s.Architectures,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
 
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
