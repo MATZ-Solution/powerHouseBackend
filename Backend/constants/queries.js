@@ -39,3 +39,4 @@ exports.getAllAloctedLocationQuery = "SELECT scout.id, scout.refrenceId, scout.p
 exports.insertArchitectureQuery = "INSERT INTO Architecture (architectureName,architectureNumber) VALUES (?,?)";
 exports.insertBuilderQuery = "INSERT INTO Builders (builderName,builderNumber) VALUES (?,?)";
 exports.insertElectricianQuery = "INSERT INTO Electricians (electricianName,ElectricianNumber) VALUES (?,?)";
+exports.updateScouteStatusQuery = `UPDATE scout SET status = ? where id = ? `;

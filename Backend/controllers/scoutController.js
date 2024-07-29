@@ -9,7 +9,8 @@ const {
   getAllAloctedLocationQuery,
   insertArchitectureQuery,
   insertBuilderQuery,
-  insertElectricianQuery
+  insertElectricianQuery,
+  updateScouteStatusQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
@@ -392,7 +393,7 @@ exports.scout = async (req, res) => {
 exports.getscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    let query = `SELECT s.id, s.projectType, s.projectName,s.size, s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,ar.architectureName, ar.architectureNumber, b.builderName, b.builderNumber, e.electricianName, e.electricianNumber ,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN Architecture AS ar on s.Architectures = ar.id LEFT JOIN Builders AS b on s.Builders = b.id LEFT JOIN Electricians AS e on s.Electricians = e.id LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
+    let query = `SELECT s.id, s.projectType, s.projectName,s.size,s.status,s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,ar.architectureName, ar.architectureNumber, b.builderName, b.builderNumber, e.electricianName, e.electricianNumber ,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN Architecture AS ar on s.Architectures = ar.id LEFT JOIN Builders AS b on s.Builders = b.id LEFT JOIN Electricians AS e on s.Electricians = e.id LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
 
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
@@ -1462,8 +1463,6 @@ exports.deletScout = async (req, res) => {
 };
 
 
-// ############################################################################################################################
-
 // ###################### Add Architecture #######################################
 exports.AddArchitecture = async (req, res) => {
   const { architectureName, architecturePhoneNumber } = req.body;
@@ -1851,4 +1850,33 @@ exports.getElectrician = async (req, res) => {
 };
 // ############################# Get Electrician ##########################################
 
-// ############################################################################################################################
+// ###################### UPDATE SCOUTE Status End #######################################
+
+exports.updateScoutStatus = async (req, res) => {
+  const { scoutId, status } = req.body;
+  try {
+    const Result = await queryRunner(updateScouteStatusQuery, [
+      status,
+      scoutId,
+    ]);
+    if (Result[0].affectedRows > 0) {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Successfully Update Scout Status",
+      });
+    } else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Update Scout Status",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// ###################### UPDATE SCOUTE Status End #######################################
