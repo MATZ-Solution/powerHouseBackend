@@ -31,12 +31,12 @@ const {
       for (let notification of selectResult[0]) {
         if (notification?.isHandShake) {
           const data = await queryRunner(
-            `SELECT user.department,user.name, user.role, user.address, user.position, user.id
+            `SELECT user.department,user.name, user.role, user.address, user.position, user.id, hs.acceptedBy,
+            user.latitude, user.longitude
              FROM scout_member as user
              JOIN handshake as hs ON user.id = hs.requestedBy
              WHERE hs.id = ?`, [notification.relevantId]
           );
-          
           if (data[0].length > 0) {
             notification['requestedBy'] = data[0][0];
           }

@@ -59,6 +59,8 @@ exports.acceptHandshake = async (req, res) => {
     console.log('Accept Handshake',req.body);
     const { handshakeId, action } = req.body;
 
+    console.log("action: ", action)
+
     const { userId } = req.user;
     try {
       // Retrieve the handshake record

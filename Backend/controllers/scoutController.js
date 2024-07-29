@@ -48,6 +48,134 @@ exports.getscoutsByID = async (req, res) => {
 };
 
 
+exports.AddReferralProject = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    console.log("this is userId: ", userId)
+    let insertQuery;
+    const {
+      projectName,
+      projectType,
+      city,
+      area,
+      block,
+      buildingType,
+      size,
+      address,
+      pinLocation,
+      contractorName,
+      contractorNumber,
+      type,
+      Architectures,
+      Builders,
+      Electricians
+    } = req.body;
+
+    const currentDate = new Date();
+
+      insertQuery = `
+        INSERT INTO referral (
+          projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
+          contractorNumber, status, created_at, updated_at, refferedBy, type,Architectures,Builders,Electricians
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?,?,?,?)`;
+      queryParams = [
+        projectName,
+        projectType,
+        city,
+        area,
+        block,
+        buildingType ?? type,
+        size,
+        address,
+        pinLocation,
+        contractorName,
+        contractorNumber,
+        currentDate,
+        currentDate,
+        userId,
+        type,
+        Architectures,
+        Builders,
+        Electricians
+      ];
+
+  //   // Execute insert query
+    const insertResult = await queryRunner(insertQuery, queryParams);
+
+  //   // Check if the insertion was successful
+    if (insertResult[0].affectedRows > 0) {
+      const scoutId = insertResult[0].insertId;
+      // refrenceId += scoutId;
+      // const updateRefrenceIdQuery = `UPDATE scout SET refrenceId = ? WHERE id = ?`;
+      // const updateRefrenceIdResult = await queryRunner(updateRefrenceIdQuery, [
+      //   refrenceId,
+      //   scoutId,
+      // ]);
+    //   if (updateRefrenceIdResult[0].affectedRows <= 0) {
+    //     const deleteQuery = `DELETE FROM scout WHERE id = ?`;
+    //     await queryRunner(deleteQuery, [scoutId]);
+    //     return res.status(500).json({
+    //       statusCode: 500,
+    //       message: "Failed to Create Scout",
+    //     });
+    //   }
+      // Insert location files if any
+      if (req.files.length > 0) {
+        for (const file of req.files) {
+          const insertFileResult = await queryRunner(
+            "INSERT INTO location_files (scouted_location, fileUrl, fileKey) VALUES (?, ?, ?)",
+            [scoutId, file.location, file.key]
+          );
+
+          if (insertFileResult.affectedRows <= 0) {
+            return res.status(500).json({
+              statusCode: 500,
+              message: "Failed to Create Scout",
+            });
+          }
+        }
+      }
+
+      // Insert notification for the user
+      // const notificationInserted = await insertNotification(
+      //   userId,
+      //   `New location scouted - ${projectName}`,
+      //   scoutId
+      // );
+
+      // if (notificationInserted && assignedTo) {
+      //   const assignedToArray = assignedTo.split(",");
+      //   for (const assignedToId of assignedToArray) {
+      //     const result = await insertNotification(
+      //       assignedToId,
+      //       `New location Allotted - ${projectName}`,
+      //       scoutId
+      //     );
+      //     // console.log("Notification Inserted:", result);
+      //   }
+      // }
+      // console.log("Notification Inserted:", notificationInserted);
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Referral Created successfully",
+      });
+    } 
+    else {
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Create Referral",
+      });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Create Referral",
+      error: error.message,
+    });
+  }
+};
+
 exports.scout = async (req, res) => {
   try {
     const { userId } = req.user;
