@@ -424,7 +424,7 @@ const {
   }
   exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
     try {
-      const { locationId, date, page = 1, limit = 8,status } = req.query;
+      const { locationId, page = 1, limit = 8,status } = req.query;
       console.log(req.query);
       const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
       const selectMeetingResult = await queryRunner(selectMeetingQuery, [locationId]);
@@ -442,13 +442,6 @@ const {
   
         let selectMeetingLogsQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? `;
         let queryParams = [meetingId, parseInt(limit), offset];
-  
-        if (date) {
-          const parsedDate = new Date(date).toISOString().split('T')[0]; // Extracting date part
-          selectMeetingLogsQuery += `AND DATE(startTime) = ? `;
-          queryParams = [meetingId, parsedDate, parseInt(limit), offset];
-        }
-  
         selectMeetingLogsQuery += `ORDER BY startTime DESC LIMIT ? OFFSET ?`;
   
         const selectMeetingLogsResult = await queryRunner(selectMeetingLogsQuery, queryParams);
