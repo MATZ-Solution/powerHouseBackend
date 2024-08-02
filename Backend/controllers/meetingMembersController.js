@@ -577,7 +577,7 @@ exports.getMeetingLogs = async (req, res) => {
   try {
     const meetingId = parseInt(req.query.meetingId) || 1; // Retrieve meetingId from query params
     const page = parseInt(req.query.page) || 1; // Retrieve page number from query params
-    const pageSize = parseInt(req.query.pageSize) || 200; // Retrieve page size from query params
+    const pageSize = parseInt(req.query.limit) || 10; // Retrieve page size from query params
     const offset = (page - 1) * pageSize;
     const query = getScoutMembersbyMembersQuery;
     const queryResult = await queryRunner(query, [meetingId, pageSize, offset]);
