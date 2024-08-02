@@ -16,5 +16,6 @@ router.get('/getMeetings/:id', verifyToken, meetingMembersController.getMeetingL
 router.get("/getMeeting", verifyToken ,meetingMembersController.getMeetings ); 
 router.get("/getSingleMeetingLogs/:meetingID", verifyToken ,meetingMembersController.getSingleMeetingsLogs ); 
 router.get("/getMeetingLogList", verifyToken ,meetingMembersController.getMeetingLogsByMeetingIdForApp );
+router.get("/getMeetingLogs", verifyToken ,meetingMembersController.getMeetingLogs );
 
 module.exports = router; 
