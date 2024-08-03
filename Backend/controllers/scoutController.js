@@ -869,6 +869,33 @@ exports.getCities = async (req, res) => {
 };
 // ###################### Get Cities End #######################################
 
+// ###################### Get All Areas  #######################################
+exports.getAllAreas = async (req, res) => {
+  try {
+    const getAreasQuery =  `SELECT  a.AreaName, c.cityName FROM  area a JOIN city c ON a.cityId = c.id`;
+    
+    selectResult = await queryRunner(getAreasQuery);
+    const data = selectResult[0];
+    console.log(selectResult)
+    if (data.length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: data,
+      });
+    } else {
+      res.status(404).json({ message: "No data Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get area list",
+      error: error.message,
+    });
+  }
+};
+// ###################### Get Areas By id End #######################################
+
 // ###################### Get Areas By id start #######################################
 exports.getAreas = async (req, res) => {
   try {

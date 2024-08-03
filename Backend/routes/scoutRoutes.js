@@ -31,6 +31,7 @@ router.get('/getScoutsByUserId', verifyToken , scoutController.getScoutByUserId)
 router.get("/countScout", verifyToken , scoutController.countScout);
 router.get('/getCities', verifyToken , scoutController.getCities);
 router.get('/getAreas', verifyToken , scoutController.getAreas);
+router.get('/getAllAreas', verifyToken ,scoutController.getAllAreas);
 router.get('/getSubAreas', verifyToken , scoutController.getSubAreas);
 
 

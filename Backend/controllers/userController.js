@@ -8,7 +8,8 @@ const {
   insertScoutUserQuery,
   addResetToken,
   updatePassword,
-  SOPQuery
+  SOPQuery,
+  selectSOPByIdQuery
 } = require("../constants/queries");
 
 const { hashedPassword } = require("../helper/hash");
@@ -522,6 +523,66 @@ exports.viewSOP = async (req, res) => {
   }
 }
 // ##################################### View SOP #########################################################
+// ##################################### Get By Id  SOP #########################################################
+
+exports.GetSingleSop=async (req,res)=>{
+  const { sopId } = req.params;
+  // console.log(sopId,"sop")
+  try {
+    const selectResult =await queryRunner(selectSOPByIdQuery, [sopId]);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0][0],
+      });
+    } else {
+      res.status(404).json({ message: "SOP Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get SOP",
+      error: error.message,
+    });
+  }
+}
+// ##################################### Get By Id  SOP #########################################################
+
+// ###################### UPDATE SOP MEMBER #######################################
+
+exports.updateSop = async (req, res) => {
+ let { city, area, projectType, projectDomain, sopId,scoutMemberNames } = req.body;
+
+ 
+
+try {
+  const query = `UPDATE sop SET city = ?, area = ?, projectType = ?, projectDomain = ?, scoutMemberID=? WHERE id = ?;`;
+  let insertResult = await queryRunner(query, [city, area, projectType, projectDomain, scoutMemberNames.join(","),sopId]);
+
+  // console.log(insertResult);
+  if (insertResult[0].affectedRows > 0) {
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Successfully Updated Sop",
+    });
+  } else {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Update Sop",
+    });
+  }
+} catch (error) {
+  return res.status(500).json({
+    statusCode: 500,
+    message: "Internal Server Error",
+    error: error.message,
+  });
+}
+
+};
+// ###################### UPDATE SOP End #######################################
+
 exports.getProfile = async (req, res) => {
   const { userId } = req.user;
   try {
