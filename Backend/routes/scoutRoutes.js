@@ -23,6 +23,10 @@ router.post('/AddSubAreaCSV', verifyToken , uploadCSV.single('file'), scoutContr
 // router.get('/getAreas', scoutController.getAreas);
 // router.get("/getscouts", verifyToken , scoutController.getscouts);
 router.get("/getscouts", verifyToken , scoutController.getscouts);
+// ADDED CONTROLLER TO GET TOP 5 SCOUTS
+router.get("/topscouts", verifyToken , scoutController.topscouts);
+// MONTHLY SCOUTS DATA
+router.get("/monthlyScouts", verifyToken , scoutController.monthlyscouts);
 router.get('/getScoutsByUserId', verifyToken , scoutController.getScoutByUserId);
 router.get("/countScout", verifyToken , scoutController.countScout);
 router.get('/getCities', verifyToken , scoutController.getCities);

@@ -23,9 +23,28 @@ exports.countScoutQuery = `
 Select COUNT(*)as total,
 (select count(*) from scout_member) as user,
 (select count(*) FROM scout WHERE assignedTo IS NULL) as UnAllotedLocation,
-(select count(*) FROM scout WHERE assignedTo IS NOT NULL) as AllotedLocation
+(select count(*) FROM scout WHERE assignedTo IS NOT NULL) as AllotedLocation,
+(select count(*) FROM scout WHERE buildingType = 'Residential') as Residential,
+(select count(*) FROM scout WHERE buildingType = 'Commercial') as Commercial,
+(select count(*) FROM scout WHERE buildingType = 'Project') as Project
  from scout
 `;
+// exports.topScoutMembers = ` SELECT 
+//   sm.id,
+//   sm.name,
+//   COUNT(s.scoutedBy) as scout_count
+// FROM 
+//   scout sm
+// LEFT JOIN 
+//   scout s
+// ON 
+//   sm.id = s.scoutedBy
+// GROUP BY 
+//   sm.id, sm.name
+// ORDER BY 
+//   scout_count DESC
+// LIMIT 5;
+// `;
 exports.updateUserProfileImage = `UPDATE user SET profileImage = ?, ProfileImageKey = ? WHERE id = ?`;
 exports.insertCityQuery = "INSERT INTO city (cityName) VALUES (?)";
 exports.insertAreaQuery = "INSERT INTO area (cityId,areaName) VALUES (?,?)";
