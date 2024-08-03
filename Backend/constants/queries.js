@@ -20,15 +20,32 @@ exports.deleteQuery = (table, ...field) => {
 exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area,block,buildingType,size,address,pinLocation,contractorName,contractorNumber,status,created_at,scoutedBy) VALUES (?,?,?, ?, ?, ?,?,?,?, ?, ?, ?,?,?)";
 exports.insertScoutUserQuery = "INSERT INTO scout_member (name,phoneNumber,email,address,position,department,password,created_at) VALUES (?,?,?,?,?,?,?,?)";
 exports.countScoutQuery = `
-Select COUNT(*)as total,
-(select count(*) from scout_member) as user,
-(select count(*) FROM scout WHERE assignedTo IS NULL) as UnAllotedLocation,
-(select count(*) FROM scout WHERE assignedTo IS NOT NULL) as AllotedLocation,
-(select count(*) FROM scout WHERE buildingType = 'Residential') as Residential,
-(select count(*) FROM scout WHERE buildingType = 'Commercial') as Commercial,
-(select count(*) FROM scout WHERE buildingType = 'Project') as Project
- from scout
+SELECT 
+    COUNT(*) AS total,
+    (SELECT COUNT(*) FROM scout_member) AS user,
+    (SELECT COUNT(*) FROM scout WHERE assignedTo IS NULL) AS UnAllotedLocation,
+    (SELECT COUNT(*) FROM scout WHERE assignedTo IS NOT NULL) AS AllotedLocation,
+    (SELECT COUNT(*) FROM scout WHERE buildingType = 'Residential') AS Residential,
+    (SELECT COUNT(*) FROM scout WHERE buildingType = 'Commercial') AS Commercial,
+    (SELECT COUNT(*) FROM scout WHERE buildingType = 'Project') AS Project,
+    (SELECT COUNT(*) FROM scout WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_total,
+    (SELECT COUNT(*) FROM scout WHERE assignedTo IS NULL AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_UnAllotedLocation,
+    (SELECT COUNT(*) FROM scout WHERE assignedTo IS NOT NULL AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_AllotedLocation,
+    (SELECT COUNT(*) FROM scout WHERE buildingType = 'Residential' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Residential,
+    (SELECT COUNT(*) FROM scout WHERE buildingType = 'Commercial' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Commercial,
+    (SELECT COUNT(*) FROM scout WHERE buildingType = 'Project' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Project
+FROM scout;
 `;
+// `
+// Select COUNT(*)as total,
+// (select count(*) from scout_member) as user,
+// (select count(*) FROM scout WHERE assignedTo IS NULL) as UnAllotedLocation,
+// (select count(*) FROM scout WHERE assignedTo IS NOT NULL) as AllotedLocation,
+// (select count(*) FROM scout WHERE buildingType = 'Residential') as Residential,
+// (select count(*) FROM scout WHERE buildingType = 'Commercial') as Commercial,
+// (select count(*) FROM scout WHERE buildingType = 'Project') as Project
+//  from scout
+// `;
 // exports.topScoutMembers = ` SELECT 
 //   sm.id,
 //   sm.name,
