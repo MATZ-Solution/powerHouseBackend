@@ -40,3 +40,18 @@ exports.insertArchitectureQuery = "INSERT INTO Architecture (architectureName,ar
 exports.insertBuilderQuery = "INSERT INTO Builders (builderName,builderNumber) VALUES (?,?)";
 exports.insertElectricianQuery = "INSERT INTO Electricians (electricianName,ElectricianNumber) VALUES (?,?)";
 exports.updateScouteStatusQuery = `UPDATE scout SET status = ? where id = ? `;
+// queries.js
+
+// meeting queries
+exports.getScoutMembersbyMembersQuery = `
+SELECT scout.*, meeting_logs.*
+FROM scout
+JOIN meetings ON scout.id = meetings.locationId
+JOIN meeting_logs ON meeting_logs.meetingId = meetings.id
+WHERE meetings.id = ?
+ORDER BY meeting_logs.startTime DESC
+LIMIT ?
+OFFSET ?;
+`;
+
+// meeting queries

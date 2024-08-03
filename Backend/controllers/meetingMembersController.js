@@ -2,17 +2,29 @@ const {
   selectQuery,
   deleteQuery,
   insertScoutQuery,
-  insertMeetingMembersQuery
+  insertMeetingMembersQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
+const { getScoutMembersbyMembersQuery } = require('../constants/queries.js');
 
 // ###################### Meeting Members Start #######################################
 exports.createMeetingMembers = async (req, res) => {
   try {
-    const { Name, phoneNumber, email, address, position, cityId, areasId, subareasId } = req.body;
-    const selectResult = await queryRunner(selectQuery("meetingmembers", "phoneNumber"), [phoneNumber]);
+    const {
+      Name,
+      phoneNumber,
+      email,
+      address,
+      position,
+      cityId,
+      areasId,
+      subareasId,
+    } = req.body;
+    const selectResult = await queryRunner(
+      selectQuery("meetingmembers", "phoneNumber"),
+      [phoneNumber]
+    );
     if (selectResult[0].length > 0) {
-
       return res.status(409).json({
         statusCode: 409,
         message: `Meeting member already exist on this Number ${phoneNumber}`,
@@ -22,217 +34,129 @@ exports.createMeetingMembers = async (req, res) => {
     const cityIdStr = cityId.toString();
     const areasIdStr = areasId.toString();
     const subareasIdStr = subareasId.toString();
-    const insertResult = await queryRunner(insertMeetingMembersQuery,
-      [Name, phoneNumber, email, address, position, cityIdStr, areasIdStr, subareasIdStr, currentDate]);
+    const insertResult = await queryRunner(insertMeetingMembersQuery, [
+      Name,
+      phoneNumber,
+      email,
+      address,
+      position,
+      cityIdStr,
+      areasIdStr,
+      subareasIdStr,
+      currentDate,
+    ]);
     if (insertResult[0].affectedRows > 0) {
       const id = insertResult[0].insertId;
 
       return res.status(200).json({
         statusCode: 200,
         message: "Meeting Members Created successfully",
-        id: insertResult[0].insertId
+        id: insertResult[0].insertId,
       });
     } else {
-      return res.status(500).json({ statusCode: 500, message: "Failed to Create Meeting Members " });
+      return res.status(500).json({
+        statusCode: 500,
+        message: "Failed to Create Meeting Members ",
+      });
     }
   } catch (error) {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Create Meeting Members",
-      error: error.message
+      error: error.message,
     });
   }
 };
 // ###################### create Meeting Members END #######################################
 
-
-// exports.addMeeting = async (req, res) => {
-
-//   const {
-//     locationId,
-//     members,
-//     meetingLocation,
-//     meetingTopic,
-//     startTime,
-//     architecture,
-//     builder,
-//     electrician
-//   } = req.body;
-
-//   try {
-//     const { userId } = req.user;
-//     const checkAlreadyExist = await queryRunner(selectQuery("meetings", "locationId"), [locationId]);
-
-//     let queryArray = []
-//     let valueArray = []
-
-//     if (architecture) {
-//       queryArray.push('Architectures = ?')
-//       valueArray.push(architecture)
-//     }
-//     if (builder) {
-//       queryArray.push('Builders = ?')
-//       valueArray.push(builder)
-//     }
-//     if (electrician) {
-//       queryArray.push('Electricians = ?')
-//       valueArray.push(electrician)
-//     }
-//     valueArray.push(Number(locationId))
-//     let mapQuery = queryArray.join(',')
-
-//     if (checkAlreadyExist[0].length > 0) {
-//       let insertInMeetingLog;
-//       let insertInMeetingLogResult;
-
-//       if (meetingTopic) {
-//         insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
-//         insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id, startTime, members + ',' + userId.toString(), meetingLocation, meetingTopic]);
-//       } else {
-//         insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;
-//         insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id, startTime, members + ',' + userId.toString(), meetingLocation]);
-//       }
-//       if (insertInMeetingLogResult[0].affectedRows > 0) {
-//         if(architecture || builder || electrician){
-//           let arch_buil_elec = `UPDATE scout SET ${mapQuery} where id = ?`
-//           let insert_data = await queryRunner(arch_buil_elec, valueArray)
-//           if (insert_data[0].affectedRows > 0 ){
-//             return res.status(200).json({
-//               statusCode: 200,
-//               message: "Meeting Created successfully",
-//               id: checkAlreadyExist[0][0].id,
-//             });
-//           }
-//         }
-//       }
-//       // if ((insertInMeetingLogResult[0].affectedRows > 0) && flag)  {
-//       //   return res.status(200).json({
-//       //     statusCode: 200,
-//       //     message: "Meeting Created successfully",
-//       //     id: checkAlreadyExist[0][0].id,
-//       //   });
-//       // }
-//       else {
-//         return res.status(500).json({
-//           statusCode: 500,
-//           message: "Failed to Create Meeting",
-//         });
-//       }
-//     }
-//     const insertQuery = `INSERT INTO meetings (locationId,assignedTo) VALUES (?,?)`;
-//     const insertResult = await queryRunner(insertQuery, [locationId, members]);
-//     if (insertResult[0].affectedRows > 0) {
-//       let createLogQuery;
-//       let createLogResult;
-//       if (meetingTopic) {
-//         createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;;
-//         createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId, startTime, members + ',' + userId.toString(), meetingLocation, meetingTopic]);
-//       } else {
-//         createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;;
-//         createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId, startTime, members + ',' + userId.toString(), meetingLocation]);
-//       }
-//       if (createLogResult[0].affectedRows > 0) {
-//         return res.status(200).json({
-//           statusCode: 200,
-//           message: "Meeting Created successfully",
-//           id: insertResult[0].insertId,
-//         });
-//       }
-//     } else {
-//       return res.status(500).json({
-//         statusCode: 500,
-//         message: "Failed to Create Meeting",
-//       });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(500).json({
-//       statusCode: 500,
-//       message: "Failed to Create Meeting Members",
-//       error: error.message
-//     });
-//   }
-// }
-
-exports.addMeeting= async (req, res)=> {
+exports.addMeeting = async (req, res) => {
   try {
-    const {
-      locationId,
-      members,
-      meetingLocation,
-      meetingTopic,
-      startTime,
-      architecture,
-      builder,
-      electrician
-
-  } = req.body;
-  const {userId} = req.user;
-  const checkAlreadyExist = await queryRunner(selectQuery("meetings","locationId"),[locationId]);
-  if (checkAlreadyExist[0].length > 0) {
-    let insertInMeetingLog;
-    let insertInMeetingLogResult;
-    if(meetingTopic){
-      insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
-      insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members+','+userId.toString(),meetingLocation,meetingTopic]);
-
-    }else{
-      insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;
-      insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [checkAlreadyExist[0][0].id,startTime,members+','+userId.toString(),meetingLocation]);
-
+    const { locationId, members, meetingLocation, meetingTopic, startTime } =
+      req.body;
+    const { userId } = req.user;
+    const checkAlreadyExist = await queryRunner(
+      selectQuery("meetings", "locationId"),
+      [locationId]
+    );
+    if (checkAlreadyExist[0].length > 0) {
+      let insertInMeetingLog;
+      let insertInMeetingLogResult;
+      if (meetingTopic) {
+        insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
+        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [
+          checkAlreadyExist[0][0].id,
+          startTime,
+          members + "," + userId.toString(),
+          meetingLocation,
+          meetingTopic,
+        ]);
+      } else {
+        insertInMeetingLog = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;
+        insertInMeetingLogResult = await queryRunner(insertInMeetingLog, [
+          checkAlreadyExist[0][0].id,
+          startTime,
+          members + "," + userId.toString(),
+          meetingLocation,
+        ]);
+      }
+      if (insertInMeetingLogResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Meeting Created successfully",
+          id: checkAlreadyExist[0][0].id,
+        });
+      } else {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to Create Meeting",
+        });
+      }
     }
-    if (insertInMeetingLogResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Meeting Created successfully",
-        id: checkAlreadyExist[0][0].id,
-      });
-    }
-    else{
+    const insertQuery = `INSERT INTO meetings (locationId,assignedTo) VALUES (?,?)`;
+    const insertResult = await queryRunner(insertQuery, [locationId, members]);
+    if (insertResult[0].affectedRows > 0) {
+      let createLogQuery;
+      let createLogResult;
+      if (meetingTopic) {
+        createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;
+        createLogResult = await queryRunner(createLogQuery, [
+          insertResult[0].insertId,
+          startTime,
+          members + "," + userId.toString(),
+          meetingLocation,
+          meetingTopic,
+        ]);
+      } else {
+        createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;
+        createLogResult = await queryRunner(createLogQuery, [
+          insertResult[0].insertId,
+          startTime,
+          members + "," + userId.toString(),
+          meetingLocation,
+        ]);
+      }
+      if (createLogResult[0].affectedRows > 0) {
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Meeting Created successfully",
+          id: insertResult[0].insertId,
+        });
+      }
+    } else {
       return res.status(500).json({
         statusCode: 500,
         message: "Failed to Create Meeting",
       });
     }
-
-  }
-  const insertQuery = `INSERT INTO meetings (locationId,assignedTo) VALUES (?,?)`;
-  const insertResult = await queryRunner(insertQuery, [locationId,members]);
-  if (insertResult[0].affectedRows > 0) {
-    let createLogQuery;
-    let createLogResult;
-    if(meetingTopic){
-      createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation,meetingTopic) VALUES (?,?,?,?,?)`;;
-      createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members+','+userId.toString(),meetingLocation,meetingTopic]);
-
-    }else{
-      createLogQuery = `INSERT INTO meeting_logs (meetingId,startTime,members,meetingLocation) VALUES (?,?,?,?)`;;
-      createLogResult = await queryRunner(createLogQuery, [insertResult[0].insertId,startTime,members+','+userId.toString(),meetingLocation]);
-    }
-    if (createLogResult[0].affectedRows > 0) {
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Meeting Created successfully",
-        id: insertResult[0].insertId,
-      });
-    }
-
-  } else {
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to Create Meeting",
-    });
-  }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      statusCode : 500,
+      statusCode: 500,
       message: "Failed to Create Meeting Members",
-      error: error.message
+      error: error.message,
     });
   }
-}
-
+};
 exports.updateMeetingLogs = async (req, res) => {
   const { userId } = req.user;
   try {
@@ -245,9 +169,8 @@ exports.updateMeetingLogs = async (req, res) => {
       meetingNotes,
       members,
       startedBy,
-      nextMeetingDate
+      nextMeetingDate,
     } = req.body;
-
 
     // now if meetingLogId is available then update the meeting logs
     if (meetingLogId) {
@@ -261,7 +184,6 @@ exports.updateMeetingLogs = async (req, res) => {
       if (endTime) {
         updateQuery += `endTime = '${endTime}',`;
         updateQuery += `inProgress = '${inProgress ?? 0}'`;
-
       }
 
       if (meetingNotes) {
@@ -272,7 +194,10 @@ exports.updateMeetingLogs = async (req, res) => {
       if (updateResult[0].affectedRows > 0) {
         if (nextMeetingDate) {
           const createNextMeetingLogQuery = `INSERT INTO meeting_logs (meetingId,startTime) VALUES (?,?)`;
-          const createNextMeetingLogResult = await queryRunner(createNextMeetingLogQuery, [meetingId, nextMeetingDate]);
+          const createNextMeetingLogResult = await queryRunner(
+            createNextMeetingLogQuery,
+            [meetingId, nextMeetingDate]
+          );
           if (createNextMeetingLogResult[0].affectedRows > 0) {
             return res.status(200).json({
               statusCode: 200,
@@ -280,7 +205,6 @@ exports.updateMeetingLogs = async (req, res) => {
               id: meetingLogId,
             });
           }
-
         } else {
           return res.status(200).json({
             statusCode: 200,
@@ -299,7 +223,6 @@ exports.updateMeetingLogs = async (req, res) => {
           message: "Failed to Update Meeting Logs",
         });
       }
-
     }
     return res.status(500).json({
       statusCode: 500,
@@ -310,14 +233,12 @@ exports.updateMeetingLogs = async (req, res) => {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Update Meeting Logs",
-      error: error.message
+      error: error.message,
     });
   }
-}
-
+};
 
 exports.getMeetings = async (req, res) => {
-
   try {
     const query = `SELECT l.id, l.locationId, l.assignedTo , s.address, s.projectName,
       (SELECT group_concat(sm.name) from scout_member sm where find_in_set(sm.id, l.assignedTo)) As assignedToMemberName
@@ -332,7 +253,9 @@ exports.getMeetings = async (req, res) => {
         data: selectResult[0],
       });
     } else {
-      res.status(200).json({ data: selectResult[0], message: "No Meetings Found" });
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "No Meetings Found" });
     }
   } catch (error) {
     return res.status(500).json({
@@ -344,7 +267,7 @@ exports.getMeetings = async (req, res) => {
 };
 
 exports.getSingleMeetingsLogs = async (req, res) => {
-  let { meetingID } = req.params
+  let { meetingID } = req.params;
   try {
     const query = `SELECT ml.id, ml.meetingId, DATE_FORMAT(ml.startTime, '%e-%b-%y %h:%i %p') AS startTime, 
       DATE_FORMAT(ml.endTime, '%e-%b-%y %h:%i %p') AS endTime, ml.inProgress, ml.meetingNotes, ml.startedBy,ml.members,
@@ -371,7 +294,6 @@ exports.getSingleMeetingsLogs = async (req, res) => {
   }
 };
 
-
 exports.getMeetingLogsByDate = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -383,7 +305,7 @@ exports.getMeetingLogsByDate = async (req, res) => {
     // Construct the search condition
     const searchCondition = search
       ? `AND (scout.projectName LIKE ? OR scout.contractorName LIKE ? OR scout.address LIKE ?)`
-      : '';
+      : "";
 
     // Updated query with search functionality
     const selectMeetingQuery = `
@@ -417,39 +339,46 @@ exports.getMeetingLogsByDate = async (req, res) => {
     const selectMeetingResult = await queryRunner(selectMeetingQuery, params);
     let anyMeetingInProgress = false;
     if (selectMeetingResult[0].length > 0) {
-      const meetingLogs = await Promise.all(selectMeetingResult[0].map(async (meeting) => {
-        // Query to get the meeting logs
-        const meetingLogQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? AND DATE(startTime) = ? ORDER BY startTime DESC LIMIT ? OFFSET ?`;
-        const meetingLogResult = await queryRunner(meetingLogQuery, [meeting.id, date, parseInt(limit), offset]);
-        if (meetingLogResult[0].length > 0) {
-          return meetingLogResult[0].map(log => {
-            if (log.inProgress === 1) {
-              anyMeetingInProgress = true;
-            }
+      const meetingLogs = await Promise.all(
+        selectMeetingResult[0].map(async (meeting) => {
+          // Query to get the meeting logs
+          const meetingLogQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? AND DATE(startTime) = ? ORDER BY startTime DESC LIMIT ? OFFSET ?`;
+          const meetingLogResult = await queryRunner(meetingLogQuery, [
+            meeting.id,
+            date,
+            parseInt(limit),
+            offset,
+          ]);
+          if (meetingLogResult[0].length > 0) {
+            return meetingLogResult[0].map((log) => {
+              if (log.inProgress === 1) {
+                anyMeetingInProgress = true;
+              }
 
-            return {
-              meetingId: meeting.id,
-              locationId: meeting.locationId,
-              projectName: meeting.projectName,
-              address: meeting.address,
-              contractorName: meeting.contractorName,
-              contractorNumber: meeting.contractorNumber,
-              longitude: meeting.pinLocation.split(",")[1],
-              latitude: meeting.pinLocation.split(",")[0],
-              log: log,
-            };
-          });
-        }
-        return null; // Return null for meetings with no logs
-      }));
+              return {
+                meetingId: meeting.id,
+                locationId: meeting.locationId,
+                projectName: meeting.projectName,
+                address: meeting.address,
+                contractorName: meeting.contractorName,
+                contractorNumber: meeting.contractorNumber,
+                longitude: meeting.pinLocation.split(",")[1],
+                latitude: meeting.pinLocation.split(",")[0],
+                log: log,
+              };
+            });
+          }
+          return null; // Return null for meetings with no logs
+        })
+      );
 
       // Filter out null values from the meetingLogs
-      const filteredMeetingLogs = meetingLogs.filter(logs => logs !== null);
+      const filteredMeetingLogs = meetingLogs.filter((logs) => logs !== null);
 
       return res.status(200).json({
         statusCode: 200,
         message: "Meeting Logs",
-        data: filteredMeetingLogs.flatMap(logs => logs),
+        data: filteredMeetingLogs.flatMap((logs) => logs),
         meetingInProgress: anyMeetingInProgress,
       });
     } else {
@@ -466,8 +395,7 @@ exports.getMeetingLogsByDate = async (req, res) => {
       error: error.message,
     });
   }
-}
-
+};
 
 exports.getMeetingLogsById = async (req, res) => {
   // in this i will send meetingId and meetinglogId and will get the specific meeting log
@@ -496,7 +424,9 @@ exports.getMeetingLogsById = async (req, res) => {
     // console.log(selectMeetingResult[0]);
     if (selectMeetingResult[0].length > 0) {
       const meetingLogQuery = `SELECT * FROM meeting_logs WHERE id = ?`;
-      const meetingLogResult = await queryRunner(meetingLogQuery, [meetingLogId]);
+      const meetingLogResult = await queryRunner(meetingLogQuery, [
+        meetingLogId,
+      ]);
       if (meetingLogResult[0].length > 0) {
         return res.status(200).json({
           statusCode: 200,
@@ -519,102 +449,10 @@ exports.getMeetingLogsById = async (req, res) => {
           message: "No Meeting Log Found",
         });
       }
-    }
-    else {
+    } else {
       return res.status(404).json({
         statusCode: 404,
         message: "No Meeting Log Found",
-      });
-    }
-
-  } catch (e) {
-    console.log(e);
-    return res.status(500).json({
-      statusCode: 500,
-      message: "Failed to get Meeting Log",
-      error: e.message,
-    });
-  }
-}
-exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
-  try {
-    const { locationId, date, page = 1, limit = 8, status } = req.query;
-    console.log(req.query);
-    const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
-    const selectMeetingResult = await queryRunner(selectMeetingQuery, [locationId]);
-
-    if (selectMeetingResult[0].length > 0) {
-      const meetingId = selectMeetingResult[0][0].id;
-      if (!meetingId) {
-        return res.status(400).json({
-          statusCode: 400,
-          message: "Meeting ID is required",
-        });
-      }
-
-      const offset = (page - 1) * limit;
-
-      let selectMeetingLogsQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? `;
-      let queryParams = [meetingId, parseInt(limit), offset];
-
-      if (date) {
-        const parsedDate = new Date(date).toISOString().split('T')[0]; // Extracting date part
-        selectMeetingLogsQuery += `AND DATE(startTime) = ? `;
-        queryParams = [meetingId, parsedDate, parseInt(limit), offset];
-      }
-
-      selectMeetingLogsQuery += `ORDER BY startTime DESC LIMIT ? OFFSET ?`;
-
-      const selectMeetingLogsResult = await queryRunner(selectMeetingLogsQuery, queryParams);
-
-      if (selectMeetingLogsResult[0].length > 0) {
-        const result = await Promise.all(selectMeetingLogsResult[0].map(async (log) => {
-          const memberIds = log?.members?.split(",");
-
-          if (memberIds) {
-            console.log(memberIds);
-
-            const placeholders = memberIds.map(() => '?').join(',');
-            const selectMembersQuery = `SELECT * FROM scout_member WHERE id IN (${placeholders})`;
-            const selectMembersResult = await queryRunner(selectMembersQuery, memberIds);
-
-            if (selectMembersResult[0].length > 0) {
-              return {
-                ...log,
-                members: selectMembersResult[0],
-              };
-            } else {
-              return {
-                ...log,
-                members: [],
-              };
-            }
-          } else {
-            console.log("no members");
-            return {
-              ...log,
-              members: [],
-            };
-          }
-        }));
-        console.log(result);
-        return res.status(200).json({
-          statusCode: 200,
-          message: "Meeting Logs",
-          data: result,
-        });
-      } else {
-        return res.status(200).json({
-          statusCode: 200,
-          message: "No meeting logs found",
-          data: [],
-        });
-      }
-    } else {
-      return res.status(200).json({
-        statusCode: 200,
-        data: [],
-        message: "No meetings found for the given location ID",
       });
     }
   } catch (e) {
@@ -626,4 +464,237 @@ exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
     });
   }
 };
+// exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
+//   try {
+//     const { locationId, date, page = 1, limit = 8, status } = req.query;
+//     console.log(req.query);
+//     const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
+//     const selectMeetingResult = await queryRunner(selectMeetingQuery, [
+//       locationId,
+//     ]);
+
+//     }catch(e){
+//       console.log(e);
+//       return res.status(500).json({
+//         statusCode: 500,
+//         message: "Failed to get Meeting Log",
+//         error: e.message,
+//       });
+//     }
+//   }
+  exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
+    try {
+      const { locationId, page = 1, limit = 10,status } = req.query;
+      const userId = req.user.userId;
+      if (!locationId) {
+        try {
+          // Select all meetings where userId is in members
+          const selectMeetingQuery = `SELECT * FROM meeting_logs WHERE FIND_IN_SET(?, members) ORDER BY startTime DESC LIMIT ? OFFSET ?`;
+          const selectMeetingResult = await queryRunner(selectMeetingQuery, [userId, parseInt(limit), (page - 1) * limit]);
+      
+          if (selectMeetingResult[0].length > 0) {
+            const result = await Promise.all(selectMeetingResult[0].map(async (log) => {
+              const memberIds = log?.members?.split(",");
+              const locationQuery = `SELECT scout.id, scout.projectName, scout.address, scout.contractorName, scout.contractorNumber, scout.pinLocation 
+                                     FROM meetings 
+                                     JOIN scout ON meetings.locationId = scout.id 
+                                     WHERE meetings.id = ?`;
+      
+              const locationResult = await queryRunner(locationQuery, [log.meetingId]);
+              
+              log.projectName = locationResult[0][0]?.projectName || "Unknown";
+      
+              if (memberIds) {
+                console.log(memberIds);
+      
+                const placeholders = memberIds.map(() => "?").join(",");
+                const selectMembersQuery = `SELECT * FROM scout_member WHERE id IN (${placeholders})`;
+                const selectMembersResult = await queryRunner(selectMembersQuery, memberIds);
+      
+                return {
+                  ...log,
+                  members: selectMembersResult[0] || [],
+                };
+              } else {
+                console.log("no members");
+                return {
+                  ...log,
+                  members: [],
+                };
+              }
+            }));
+      
+            console.log(result);
+            return res.status(200).json({
+              statusCode: 200,
+              message: "Meeting Logs",
+              data: result,
+            });
+          } else {
+            return res.status(200).json({
+              statusCode: 200,
+              message: "No meetings found",
+              data: [],
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching meeting logs:", error);
+          return res.status(500).json({
+            statusCode: 500,
+            message: "Internal Server Error",
+          });
+        }
+      }
+      else{
+        const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
+        const selectMeetingResult = await queryRunner(selectMeetingQuery, [locationId]);
+    
+        if (selectMeetingResult[0].length > 0) {
+          const meetingId = selectMeetingResult[0][0].id;
+          if (!meetingId) {
+            return res.status(400).json({
+              statusCode: 400,
+              message: "Meeting ID is required",
+            });
+          }
+    
+          const offset = (page - 1) * limit;
+    
+          let selectMeetingLogsQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? `;
+          let queryParams = [meetingId, parseInt(limit), offset];
+          selectMeetingLogsQuery += `ORDER BY startTime DESC LIMIT ? OFFSET ?`;
+    
+          const selectMeetingLogsResult = await queryRunner(selectMeetingLogsQuery, queryParams);
+    
+          if (selectMeetingLogsResult[0].length > 0) {
+            const result = await Promise.all(selectMeetingLogsResult[0].map(async (log) => {
+              const memberIds = log?.members?.split(",");
+  
+              if (memberIds) {
+                console.log(memberIds);
+  
+                const placeholders = memberIds.map(() => "?").join(",");
+                const selectMembersQuery = `SELECT * FROM scout_member WHERE id IN (${placeholders})`;
+                const selectMembersResult = await queryRunner(
+                  selectMembersQuery,
+                  memberIds
+                );
+  
+                if (selectMembersResult[0].length > 0) {
+                  return {
+                    ...log,
+                    members: selectMembersResult[0],
+                  };
+                } else {
+                  return {
+                    ...log,
+                    members: [],
+                  };
+                }
+              } else {
+                console.log("no members");
+                return {
+                  ...log,
+                  members: [],
+                };
+              }
+            })
+          );
+          console.log(result);
+          return res.status(200).json({
+            statusCode: 200,
+            message: "Meeting Logs",
+            data: result,
+          });
+        } else {
+          return res.status(200).json({
+            statusCode: 200,
+            message: "No meeting logs found",
+            data: [],
+          });
+        }
+      } else {
+        return res.status(200).json({
+          statusCode: 200,
+          data: [],
+          message: "No meetings found for the given location ID",
+        });
+      }
+      }
+      
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to get Meeting Log",
+      error: e.message,
+    });
+  }
+};
+
+
+
+
+exports.getMeetingLogs = async (req, res) => {
+  try {
+    const meetingId = parseInt(req.query.meetingId) || 1; // Retrieve meetingId from query params
+    const page = parseInt(req.query.page) || 1; // Retrieve page number from query params
+    const pageSize = parseInt(req.query.limit) || 10; // Retrieve page size from query params
+    const offset = (page - 1) * pageSize;
+    console.log(meetingId, page, pageSize, offset);
+    const query = getScoutMembersbyMembersQuery;
+    const queryResult = await queryRunner(query, [meetingId, pageSize, offset]);
+
+    if (queryResult[0].length > 0) {
+      const results = await Promise.all(queryResult[0].map(async (item) => {
+        let membersData = [];
+        if (item.members) {
+          const memberIds = item.members.split(',').map(id => id.trim()).filter(id => id);
+
+          if (memberIds.length > 0) {
+            const memberQuery = `
+            SELECT * FROM scout_member
+            WHERE id IN (${memberIds.map(id => `'${id}'`).join(',')});
+            `;
+
+            const memberResult = await queryRunner(memberQuery);
+            membersData = memberResult[0];
+          }
+        }
+
+        return {
+          ...item,
+          membersData,
+        };
+      }));
+
+      return res.status(200).json({
+        statusCode: 200,
+        message: "Meeting Logs and Members",
+        data: results,
+        pagination: {
+          page,
+          pageSize,
+          totalRecords: queryResult[0].length, // Total number of records
+        },
+      });
+    } else {
+      return res.status(200).json({
+        statusCode: 200,
+        message: "No Meeting Logs Found",
+        data: [],
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
 

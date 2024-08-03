@@ -1139,6 +1139,104 @@ WHERE
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+exports.getAllocatedLocationById = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const locationId = req.params.id;
+    console.log("this is location id", req.params);
+    const { limit = 5, page, search = "", projectType } = req.query; // Default search to an empty string
+    const offset = (page - 1) * limit;
+    // // console.log("this is limit", req.query);
+    // Base query
+    let query = `
+SELECT
+  scout.id,
+  scout.refrenceId,
+  scout.projectName,
+  scout.buildingType,
+  scout.city,
+  scout.address,
+  scout.contractorName,
+  scout.contractorNumber,
+  scout.assignedTo,
+  scout.sops,
+  scout.scoutedBy,
+  scout.projectType,
+  scout.created_at,
+  scout.pinLocation,
+  scout.status,
+  scout.updated_at,
+  scout_member.name AS scouter,
+  scout_member.role AS scouterRole,
+  (
+    SELECT
+      COUNT(ML.meetingId)
+    FROM
+      scout S
+    LEFT JOIN
+      meetings M ON S.id = M.locationId
+    LEFT JOIN
+      meeting_logs ML ON M.id = ML.meetingId
+    WHERE
+      S.sops IS NOT NULL
+      AND S.id = scout.id
+  ) AS totalMeeting,
+  (
+    SELECT
+      GROUP_CONCAT(scout_member.name ORDER BY FIELD(scout_member.id, scout.assignedTo))
+    FROM
+      scout_member
+    WHERE
+      FIND_IN_SET(scout_member.id, scout.assignedTo)
+  ) AS assignedToMember
+FROM
+  scout
+JOIN
+  scout_member ON scout.scoutedBy = scout_member.id
+WHERE
+  scout.id = ?
+`;
+
+const queryParams = [locationId];
+
+    
+
+   
+
+    const selectResult = await queryRunner(query, queryParams);
+    console.log("this is allocated location", selectResult[0]);
+    if (selectResult[0].length > 0) {
+      const locationFiles = [];
+      for (const location of selectResult[0]) {
+        const filesQuery = `SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?`;
+        const filesResult = await queryRunner(filesQuery, [location.id]);
+        locationFiles.push(filesResult[0].length > 0 ? filesResult[0] : []);
+
+        location.files = filesResult[0];
+        // // console.log("this is files", location);
+
+        if (location.sops) {
+          // // console.log("this is ", location.sops);
+          const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
+          const sopResult = await queryRunner(sopQuery, [location.sops]);
+          location.sops = sopResult[0];
+        }
+      }
+      console.log("this is location files", selectResult[0][0])
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0][0],
+      });
+    } else {
+      res.status(404).json({ message: "Location Not Found" });
+    }
+  } catch (error) {
+    console.error("Error fetching allocated locations:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 exports.getAllocatedLocationByLocationId = async (req, res) => {
   try {
@@ -1337,7 +1435,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
 exports.getLatAndLongMarker = async (req, res) => {
   const { id } = req.params
   try {
-    const query = `SELECT id, buildingType, pinLocation, scoutedBy FROM scout where scoutedBy = ${id}`;
+    const query = `SELECT id, buildingType, projectName, pinLocation, scoutedBy FROM scout where scoutedBy = ${id}`;
     let selectResult = await queryRunner(query);
     // console.log("this is password: ", selectResult[0])
     if (selectResult[0].length > 0) {
@@ -1396,7 +1494,10 @@ exports.UpdateScoutedLocation = async (req, res) => {
     address,
     contractorName,
     contractorNumber,
-    buildingType
+    buildingType,
+    Architectures,
+        Builders,
+        Electricians
   } = req.body;
   console.log("this is params id: ", id);
   console.log("this is req.body: ", req.body);
@@ -1412,7 +1513,10 @@ exports.UpdateScoutedLocation = async (req, res) => {
   address=?,
   contractorName=?,
   contractorNumber=?,
-  buildingType=?
+  buildingType=?,
+  Architectures=?,
+        Builders=?,
+        Electricians=?
   where id = ${id}`;
   try {
     let insertResult = await queryRunner(query, [
@@ -1426,6 +1530,9 @@ exports.UpdateScoutedLocation = async (req, res) => {
       contractorName,
       contractorNumber,
       buildingType,
+      Architectures,
+        Builders,
+        Electricians
     ]);
     if (insertResult[0].affectedRows > 0) {
       return res.status(200).json({
@@ -1440,6 +1547,7 @@ exports.UpdateScoutedLocation = async (req, res) => {
       });
     }
   } catch (error) {
+    console.log("error", error)
     return res.status(500).json({
       statusCode: 500,
       message: "Internal Server Error",
