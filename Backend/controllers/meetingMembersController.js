@@ -464,102 +464,164 @@ exports.getMeetingLogsById = async (req, res) => {
     });
   }
 };
-exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
-  try {
-    const { locationId, date, page = 1, limit = 8, status } = req.query;
-    console.log(req.query);
-    const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
-    const selectMeetingResult = await queryRunner(selectMeetingQuery, [
-      locationId,
-    ]);
+// exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
+//   try {
+//     const { locationId, date, page = 1, limit = 8, status } = req.query;
+//     console.log(req.query);
+//     const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
+//     const selectMeetingResult = await queryRunner(selectMeetingQuery, [
+//       locationId,
+//     ]);
 
-    }catch(e){
-      console.log(e);
-      return res.status(500).json({
-        statusCode: 500,
-        message: "Failed to get Meeting Log",
-        error: e.message,
-      });
-    }
-  }
+//     }catch(e){
+//       console.log(e);
+//       return res.status(500).json({
+//         statusCode: 500,
+//         message: "Failed to get Meeting Log",
+//         error: e.message,
+//       });
+//     }
+//   }
   exports.getMeetingLogsByMeetingIdForApp = async (req, res) => {
     try {
-      const { locationId, page = 1, limit = 8,status } = req.query;
-      console.log(req.query);
-      const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
-      const selectMeetingResult = await queryRunner(selectMeetingQuery, [locationId]);
-  
-      if (selectMeetingResult[0].length > 0) {
-        const meetingId = selectMeetingResult[0][0].id;
-        if (!meetingId) {
-          return res.status(400).json({
-            statusCode: 400,
-            message: "Meeting ID is required",
-          });
-        }
-  
-        const offset = (page - 1) * limit;
-  
-        let selectMeetingLogsQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? `;
-        let queryParams = [meetingId, parseInt(limit), offset];
-        selectMeetingLogsQuery += `ORDER BY startTime DESC LIMIT ? OFFSET ?`;
-  
-        const selectMeetingLogsResult = await queryRunner(selectMeetingLogsQuery, queryParams);
-  
-        if (selectMeetingLogsResult[0].length > 0) {
-          const result = await Promise.all(selectMeetingLogsResult[0].map(async (log) => {
-            const memberIds = log?.members?.split(",");
-
-            if (memberIds) {
-              console.log(memberIds);
-
-              const placeholders = memberIds.map(() => "?").join(",");
-              const selectMembersQuery = `SELECT * FROM scout_member WHERE id IN (${placeholders})`;
-              const selectMembersResult = await queryRunner(
-                selectMembersQuery,
-                memberIds
-              );
-
-              if (selectMembersResult[0].length > 0) {
+      const { locationId, page = 1, limit = 10,status } = req.query;
+      const userId = req.user.userId;
+      if (!locationId) {
+        try {
+          // Select all meetings where userId is in members
+          const selectMeetingQuery = `SELECT * FROM meeting_logs WHERE FIND_IN_SET(?, members) ORDER BY startTime DESC LIMIT ? OFFSET ?`;
+          const selectMeetingResult = await queryRunner(selectMeetingQuery, [userId, parseInt(limit), (page - 1) * limit]);
+      
+          if (selectMeetingResult[0].length > 0) {
+            const result = await Promise.all(selectMeetingResult[0].map(async (log) => {
+              const memberIds = log?.members?.split(",");
+              const locationQuery = `SELECT scout.id, scout.projectName, scout.address, scout.contractorName, scout.contractorNumber, scout.pinLocation 
+                                     FROM meetings 
+                                     JOIN scout ON meetings.locationId = scout.id 
+                                     WHERE meetings.id = ?`;
+      
+              const locationResult = await queryRunner(locationQuery, [log.meetingId]);
+              
+              log.projectName = locationResult[0][0]?.projectName || "Unknown";
+      
+              if (memberIds) {
+                console.log(memberIds);
+      
+                const placeholders = memberIds.map(() => "?").join(",");
+                const selectMembersQuery = `SELECT * FROM scout_member WHERE id IN (${placeholders})`;
+                const selectMembersResult = await queryRunner(selectMembersQuery, memberIds);
+      
                 return {
                   ...log,
-                  members: selectMembersResult[0],
+                  members: selectMembersResult[0] || [],
                 };
               } else {
+                console.log("no members");
                 return {
                   ...log,
                   members: [],
                 };
               }
-            } else {
-              console.log("no members");
-              return {
-                ...log,
-                members: [],
-              };
-            }
-          })
-        );
-        console.log(result);
-        return res.status(200).json({
-          statusCode: 200,
-          message: "Meeting Logs",
-          data: result,
-        });
+            }));
+      
+            console.log(result);
+            return res.status(200).json({
+              statusCode: 200,
+              message: "Meeting Logs",
+              data: result,
+            });
+          } else {
+            return res.status(200).json({
+              statusCode: 200,
+              message: "No meetings found",
+              data: [],
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching meeting logs:", error);
+          return res.status(500).json({
+            statusCode: 500,
+            message: "Internal Server Error",
+          });
+        }
+      }
+      else{
+        const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ? `;
+        const selectMeetingResult = await queryRunner(selectMeetingQuery, [locationId]);
+    
+        if (selectMeetingResult[0].length > 0) {
+          const meetingId = selectMeetingResult[0][0].id;
+          if (!meetingId) {
+            return res.status(400).json({
+              statusCode: 400,
+              message: "Meeting ID is required",
+            });
+          }
+    
+          const offset = (page - 1) * limit;
+    
+          let selectMeetingLogsQuery = `SELECT * FROM meeting_logs WHERE meetingId = ? `;
+          let queryParams = [meetingId, parseInt(limit), offset];
+          selectMeetingLogsQuery += `ORDER BY startTime DESC LIMIT ? OFFSET ?`;
+    
+          const selectMeetingLogsResult = await queryRunner(selectMeetingLogsQuery, queryParams);
+    
+          if (selectMeetingLogsResult[0].length > 0) {
+            const result = await Promise.all(selectMeetingLogsResult[0].map(async (log) => {
+              const memberIds = log?.members?.split(",");
+  
+              if (memberIds) {
+                console.log(memberIds);
+  
+                const placeholders = memberIds.map(() => "?").join(",");
+                const selectMembersQuery = `SELECT * FROM scout_member WHERE id IN (${placeholders})`;
+                const selectMembersResult = await queryRunner(
+                  selectMembersQuery,
+                  memberIds
+                );
+  
+                if (selectMembersResult[0].length > 0) {
+                  return {
+                    ...log,
+                    members: selectMembersResult[0],
+                  };
+                } else {
+                  return {
+                    ...log,
+                    members: [],
+                  };
+                }
+              } else {
+                console.log("no members");
+                return {
+                  ...log,
+                  members: [],
+                };
+              }
+            })
+          );
+          console.log(result);
+          return res.status(200).json({
+            statusCode: 200,
+            message: "Meeting Logs",
+            data: result,
+          });
+        } else {
+          return res.status(200).json({
+            statusCode: 200,
+            message: "No meeting logs found",
+            data: [],
+          });
+        }
       } else {
         return res.status(200).json({
           statusCode: 200,
-          message: "No meeting logs found",
           data: [],
+          message: "No meetings found for the given location ID",
         });
       }
-    } else {
-      return res.status(200).json({
-        statusCode: 200,
-        data: [],
-        message: "No meetings found for the given location ID",
-      });
-    }
+      }
+      
   } catch (e) {
     console.log(e);
     return res.status(500).json({
@@ -579,6 +641,7 @@ exports.getMeetingLogs = async (req, res) => {
     const page = parseInt(req.query.page) || 1; // Retrieve page number from query params
     const pageSize = parseInt(req.query.limit) || 10; // Retrieve page size from query params
     const offset = (page - 1) * pageSize;
+    console.log(meetingId, page, pageSize, offset);
     const query = getScoutMembersbyMembersQuery;
     const queryResult = await queryRunner(query, [meetingId, pageSize, offset]);
 
