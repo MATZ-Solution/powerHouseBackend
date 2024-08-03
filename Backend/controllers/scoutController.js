@@ -28,7 +28,12 @@ exports.getscoutsByID = async (req, res) => {
   try {
     const { id } = req.params;
     console.log("this is params id: ", id)
-    let query = `SELECT * from scout where id= ${id}`
+    let query = `SELECT s.*,A.id as architectureID, A.architectureName,B.id as builderID, B.builderName,E.id as electricianID, E.electricianName 
+from scout s 
+LEFT JOIN Architecture A ON s.Architectures = A.id
+LEFT JOIN Builders B ON s.Builders = B.id 
+LEFT JOIN Electricians E ON s.Electricians = E.id 
+WHERE s.id = ${id}`
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
       res.status(200).json({
@@ -37,7 +42,7 @@ exports.getscoutsByID = async (req, res) => {
         data: selectResult[0],
       });
     } else {
-      res.status(200).json({data: selectResult[0], message: "No Scout Found" });
+      res.status(200).json({ data: selectResult[0], message: "No Scout Found" });
     }
   } catch (error) {
     return res.status(500).json({
@@ -74,36 +79,36 @@ exports.AddReferralProject = async (req, res) => {
 
     const currentDate = new Date();
 
-      insertQuery = `
+    insertQuery = `
         INSERT INTO referral (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
           contractorNumber, status, created_at, updated_at, refferedBy, type,Architectures,Builders,Electricians
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?,?,?,?)`;
-      queryParams = [
-        projectName,
-        projectType,
-        city,
-        area,
-        block,
-        buildingType ?? type,
-        size,
-        address,
-        pinLocation,
-        contractorName,
-        contractorNumber,
-        currentDate,
-        currentDate,
-        userId,
-        type,
-        Architectures,
-        Builders,
-        Electricians
-      ];
+    queryParams = [
+      projectName,
+      projectType,
+      city,
+      area,
+      block,
+      buildingType ?? type,
+      size,
+      address,
+      pinLocation,
+      contractorName,
+      contractorNumber,
+      currentDate,
+      currentDate,
+      userId,
+      type,
+      Architectures,
+      Builders,
+      Electricians
+    ];
 
-  //   // Execute insert query
+    //   // Execute insert query
     const insertResult = await queryRunner(insertQuery, queryParams);
 
-  //   // Check if the insertion was successful
+    //   // Check if the insertion was successful
     if (insertResult[0].affectedRows > 0) {
       const scoutId = insertResult[0].insertId;
       // refrenceId += scoutId;
@@ -112,14 +117,14 @@ exports.AddReferralProject = async (req, res) => {
       //   refrenceId,
       //   scoutId,
       // ]);
-    //   if (updateRefrenceIdResult[0].affectedRows <= 0) {
-    //     const deleteQuery = `DELETE FROM scout WHERE id = ?`;
-    //     await queryRunner(deleteQuery, [scoutId]);
-    //     return res.status(500).json({
-    //       statusCode: 500,
-    //       message: "Failed to Create Scout",
-    //     });
-    //   }
+      //   if (updateRefrenceIdResult[0].affectedRows <= 0) {
+      //     const deleteQuery = `DELETE FROM scout WHERE id = ?`;
+      //     await queryRunner(deleteQuery, [scoutId]);
+      //     return res.status(500).json({
+      //       statusCode: 500,
+      //       message: "Failed to Create Scout",
+      //     });
+      //   }
       // Insert location files if any
       if (req.files.length > 0) {
         for (const file of req.files) {
@@ -160,7 +165,7 @@ exports.AddReferralProject = async (req, res) => {
         statusCode: 200,
         message: "Referral Created successfully",
       });
-    } 
+    }
     else {
       return res.status(500).json({
         statusCode: 500,
@@ -180,7 +185,7 @@ exports.AddReferralProject = async (req, res) => {
 exports.scout = async (req, res) => {
   try {
     const { userId } = req.user;
-    console.log("this is userId: ", userId)
+    console.log("this is userId: ", req.body)
     const {
       projectName,
       projectType,
@@ -194,9 +199,11 @@ exports.scout = async (req, res) => {
       contractorName,
       contractorNumber,
       type,
+      scoutType,
       Architectures,
       Builders,
-      Electricians
+      Electricians,
+      // scoutType
     } = req.body;
 
     // // console.log("Request body:", req.body);
@@ -259,8 +266,8 @@ exports.scout = async (req, res) => {
       insertQuery = `
         INSERT INTO scout (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type, sops,Architectures,Builders,Electricians
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?,?,?,?,?)`;
+          contractorNumber, status, created_at, updated_at, scoutedBy, assignedTo, type, sops,scoutType,Architectures,Builders,Electricians
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?, ?,?,?,?,?,?)`;
       queryParams = [
         projectName,
         projectType,
@@ -279,16 +286,18 @@ exports.scout = async (req, res) => {
         assignedTo,
         type,
         sops,
+        scoutType,
         Architectures,
         Builders,
         Electricians,
+        // scoutType
       ];
     } else {
       insertQuery = `
         INSERT INTO scout (
           projectName, projectType, city, area, block, buildingType, size, address, pinLocation, contractorName,
-          contractorNumber, status, created_at, updated_at, scoutedBy, type,Architectures,Builders,Electricians
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?,?,?,?)`;
+          contractorNumber, status, created_at, updated_at, scoutedBy, type,scoutType, Architectures,Builders,Electricians 
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?,?,?,?,?,?)`;
       queryParams = [
         projectName,
         projectType,
@@ -305,9 +314,11 @@ exports.scout = async (req, res) => {
         currentDate,
         userId,
         type,
+        scoutType,
         Architectures,
         Builders,
-        Electricians
+        Electricians,
+
       ];
     }
 
@@ -378,7 +389,7 @@ exports.scout = async (req, res) => {
       });
     }
   } catch (error) {
-    // console.log("Error:", error);
+    console.log("Error:", error);
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Create Scout",
@@ -876,18 +887,18 @@ exports.getSubAreas = async (req, res) => {
 
 exports.getAllotedLocations = async (req, res) => {
   try {
+    console.log('req.body: ', req.body)
+    let selectResult = await queryRunner(getAllAloctedLocationQuery);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res.status(200).json({ data: selectResult[0], message: "No Location Found" });
+    }
 
-      let selectResult = await queryRunner(getAllAloctedLocationQuery);
-      if (selectResult[0].length > 0) {
-        res.status(200).json({
-          statusCode: 200,
-          message: "Success",
-          data: selectResult[0],
-        });
-      } else {
-        res.status(200).json({data: selectResult[0], message: "No Location Found" });
-      }
-    
   } catch (error) {
     return res.status(500).json({
       statusCode: 500,
@@ -1041,6 +1052,7 @@ exports.getAllocatedLocation = async (req, res) => {
   scout.pinLocation,
   scout.status,
   scout.updated_at,
+  scout.scoutType,
   scout_member.name AS scouter,
   scout_member.role AS scouterRole,
   (
@@ -1176,7 +1188,7 @@ exports.getAllocatedLocationByLocationId = async (req, res) => {
     } else {
       res.status(404).json({ message: "Location Not Found" });
     }
-  } catch (error) {}
+  } catch (error) { }
 };
 
 exports.getLongAndLat = async (req, res) => {
@@ -1375,7 +1387,7 @@ exports.scoutMap = async (req, res) => {
 // ###################### EDIT SCOUT LOCATION #######################################
 exports.UpdateScoutedLocation = async (req, res) => {
   const { id } = req.params;
-  const {projectName,
+  const { projectName,
     type,
     size,
     city,
@@ -1385,7 +1397,7 @@ exports.UpdateScoutedLocation = async (req, res) => {
     contractorName,
     contractorNumber,
     buildingType
-     } = req.body;
+  } = req.body;
   console.log("this is params id: ", id);
   console.log("this is req.body: ", req.body);
 
@@ -1530,15 +1542,15 @@ exports.AddArchitectureCSV = async (req, res) => {
         try {
           // Process each city in the CSV file
           for (const Architecture of Architectureies) {
-            const ArchitectureName = Architecture.ArchitectureName; 
-            const ArchitectureNumber = Architecture.ArchitectureNumber; 
+            const ArchitectureName = Architecture.ArchitectureName;
+            const ArchitectureNumber = Architecture.ArchitectureNumber;
             const selectResult = await queryRunner(
               selectQuery("Architecture", "architectureName"),
               [ArchitectureName]
             );
 
             if (selectResult[0].length === 0) {
-              await queryRunner(insertArchitectureQuery, [ArchitectureName,ArchitectureNumber]);
+              await queryRunner(insertArchitectureQuery, [ArchitectureName, ArchitectureNumber]);
             }
           }
 
@@ -1635,15 +1647,15 @@ exports.AddBuilderCSV = async (req, res) => {
         try {
           // Process each city in the CSV file
           for (const Builder of Builders) {
-            const BuilderName = Builder.BuilderName; 
-            const BuilderNumber = Builder.BuilderNumber; 
+            const BuilderName = Builder.BuilderName;
+            const BuilderNumber = Builder.BuilderNumber;
             const selectResult = await queryRunner(
               selectQuery("Builders", "BuilderName"),
               [BuilderName]
             );
 
             if (selectResult[0].length === 0) {
-              await queryRunner(insertBuilderQuery, [BuilderName,BuilderNumber]);
+              await queryRunner(insertBuilderQuery, [BuilderName, BuilderNumber]);
             }
           }
 
@@ -1740,15 +1752,15 @@ exports.AddElectricianCSV = async (req, res) => {
         try {
           // Process each city in the CSV file
           for (const Electrician of Electricians) {
-            const ElectricianName = Electrician.ElectricianName; 
-            const ElectricianNumber = Electrician.ElectricianNumber; 
+            const ElectricianName = Electrician.ElectricianName;
+            const ElectricianNumber = Electrician.ElectricianNumber;
             const selectResult = await queryRunner(
               selectQuery("Electricians", "ElectricianName"),
               [ElectricianName]
             );
 
             if (selectResult[0].length === 0) {
-              await queryRunner(insertElectricianQuery, [ElectricianName,ElectricianNumber]);
+              await queryRunner(insertElectricianQuery, [ElectricianName, ElectricianNumber]);
             }
           }
 
@@ -1854,6 +1866,7 @@ exports.getElectrician = async (req, res) => {
 
 exports.updateScoutStatus = async (req, res) => {
   const { scoutId, status } = req.body;
+  console.log('req.body update scout', req.body)
   try {
     const Result = await queryRunner(updateScouteStatusQuery, [
       status,
