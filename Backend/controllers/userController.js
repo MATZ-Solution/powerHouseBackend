@@ -95,6 +95,7 @@ exports.signIn = async function (req, res) {
       column = "phoneNumber";
     }
     // console.log(table, column);
+    console.log(selectQuery(table, column));
     const selectResult = await queryRunner(selectQuery(table, column), [email]);
     if (selectResult[0].length === 0) {
       console.log("Email not found");
