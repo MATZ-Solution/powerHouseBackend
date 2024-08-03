@@ -47,6 +47,8 @@ router.get('/getLatAndLongMarker/:id', verifyToken , scoutController.getLatAndLo
 router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMember);
 router.get('/getAllocatedLocation', verifyToken , scoutController.getAllocatedLocation);
 router.get('/getScoutedLocation', verifyToken , scoutController.getScoutsByUserIdWithAllInformation);
+router.get('/getAllocatedLocation/:id', verifyToken , scoutController.getAllocatedLocationById);
+router.get('/getScoutedLocation/:id', verifyToken , scoutController.getScoutsByUserIdWithAllInformation);
 router.get('/scoutMap', scoutController.scoutMap);
 
 // router.get('/getSubAreas', scoutController.getSubAreas);
