@@ -36,6 +36,27 @@ SELECT
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Project' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Project
 FROM scout;
 `;
+
+exports.monthlyScoutingQuery =`
+SELECT 
+  DATE_FORMAT(months.month, '%Y-%m') AS month, 
+  DATE_FORMAT(months.month, '%M') AS month_name, 
+  COUNT(s.id) AS scout_count
+FROM 
+  (SELECT 
+     DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL seq MONTH), '%Y-%m-01') AS month
+   FROM 
+     (SELECT 0 seq UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 
+      UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL 
+      SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 
+      UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL 
+      SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 
+      UNION ALL SELECT 23) AS a) AS months
+LEFT JOIN scout s ON DATE_FORMAT(s.created_at, '%Y-%m') = DATE_FORMAT(months.month, '%Y-%m')
+GROUP BY months.month
+ORDER BY months.month ASC;
+`;
+
 // `
 // Select COUNT(*)as total,
 // (select count(*) from scout_member) as user,

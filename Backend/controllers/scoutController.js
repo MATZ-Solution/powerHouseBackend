@@ -10,7 +10,8 @@ const {
   insertArchitectureQuery,
   insertBuilderQuery,
   insertElectricianQuery,
-  updateScouteStatusQuery
+  updateScouteStatusQuery,
+  monthlyScoutingQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
@@ -447,7 +448,7 @@ exports.topscouts = async (req, res) => {
 exports.monthlyscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    const query = "SELECT DATE_FORMAT(s.created_at, '%Y-%m') AS month, DATE_FORMAT(s.created_at, '%M') AS month_name, COUNT(*) AS scout_count FROM scout s GROUP BY month ORDER BY month ASC;";
+    const query = monthlyScoutingQuery;
 
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
