@@ -49,7 +49,9 @@ router.put('/updateScouteMember', verifyToken , scoutController.updateScoutMembe
 router.get('/getAllocatedLocation', verifyToken , scoutController.getAllocatedLocation);
 router.get('/getScoutedLocation', verifyToken , scoutController.getScoutsByUserIdWithAllInformation);
 router.get('/getAllocatedLocation/:id', verifyToken , scoutController.getAllocatedLocationById);
-router.get('/getScoutedLocation/:id', verifyToken , scoutController.getScoutsByUserIdWithAllInformation);
+router.get('/getScoutedLocation/:id', verifyToken , scoutController.getScoutByIdWithAllInformation);
+
+
 router.get('/scoutMap', scoutController.scoutMap);
 
 // router.get('/getSubAreas', scoutController.getSubAreas);
@@ -70,7 +72,7 @@ router.get('/getArchitecture', verifyToken ,scoutController.getArchitecture);
 router.get('/getBuilder', verifyToken ,scoutController.getBuilder);
 router.get('/getElectricians', verifyToken ,scoutController.getElectrician);
 router.put('/updateScouteStatus', verifyToken , scoutController.updateScoutStatus);
-// router.put('/updateScouteStatus', scoutController.updateScoutStatus);
+router.get('/logs/:id',verifyToken,scoutController.getLogsById)
 
 
 
