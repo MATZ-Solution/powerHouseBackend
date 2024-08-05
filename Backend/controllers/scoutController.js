@@ -2159,3 +2159,80 @@ exports.updateScoutStatus = async (req, res) => {
 };
 
 // ###################### UPDATE SCOUTE Status End #######################################
+exports.getLogsById=async (req, res) =>{
+  try {
+    const {userId}=req?.user
+    const scoutQuery = `
+      SELECT * FROM scout WHERE id = $1;
+    `;
+    const scoutResult = await queryRunner(scoutQuery, [userId]);
+    if (scoutResult[0].length === 0) {
+      throw new Error('Scout not found');
+    }
+    const scout = scoutResult[0][0];
+    const scoutMemberQuery = `
+    SELECT * FROM scout_member WHERE id = $1;
+  `;
+  const scoutMemberResult = await queryRunner(scoutMemberQuery, [scout.scoutedBy]);
+  const sopQuery = `
+  SELECT * FROM sop WHERE scoutMemberID = $1;
+`;
+const sopResult = await queryRunner(sopQuery, [scout.scoutedBy]);
+
+const meetingQuery = `
+  SELECT * FROM meeting WHERE locationId = $1;
+`;
+const meetingResult = await queryRunner(meetingQuery, [scout.id]);
+
+const meetingLogQuery = `
+  SELECT * FROM meeting_log WHERE meetingId IN (
+    SELECT id FROM meeting WHERE locationId = $1
+  );
+`;
+const meetingLogResult = await queryRunner(meetingLogQuery, [scout.id]);
+const architectureQuery = `
+      SELECT * FROM architecture WHERE id IN (
+        SELECT unnest(string_to_array(scout.architectures, ',')::int[])
+      );
+    `;
+    const architectureResult = await queryRunner(architectureQuery);
+
+    const builderQuery = `
+      SELECT * FROM builder WHERE id IN (
+        SELECT unnest(string_to_array(scout.builders, ',')::int[])
+      );
+    `;
+    const builderResult = await queryRunner(builderQuery);
+
+    const electricianQuery = `
+      SELECT * FROM electrician WHERE id IN (
+        SELECT unnest(string_to_array(scout.electricians, ',')::int[])
+      );
+    `;
+    const electricianResult = await queryRunner(electricianQuery);
+
+    const handshakeQuery = `
+      SELECT * FROM handshake WHERE locationId = $1;
+    `;
+    const handshakeResult = await queryRunner(handshakeQuery, [scout.id]);
+
+    const changeLogQuery = `
+      SELECT * FROM ChangeLog WHERE record_id = $1 AND table_name = 'scout';
+    `;
+    const changeLogResult = await queryRunner(changeLogQuery, [scoutId]);
+    res.status(200).json({
+      scout,
+      scoutMember: scoutMemberResult.rows[0],
+      sop: sopResult.rows,
+      meetings: meetingResult.rows,
+      meetingLogs: meetingLogResult.rows,
+      architectures: architectureResult.rows,
+      builders: builderResult.rows,
+      electricians: electricianResult.rows,
+      handshakes: handshakeResult.rows,
+      changeLogs: changeLogResult.rows,
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } 
+}
