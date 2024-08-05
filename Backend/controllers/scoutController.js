@@ -427,6 +427,60 @@ exports.getscouts = async (req, res) => {
   }
 };
 
+// TOP SCOUT MEMBERS
+exports.topscouts = async (req, res) => {
+  try {
+    // const { userId } = req.user;
+    const query = "SELECT sm.id, sm.name, COUNT(s.scoutedBy) as scout_count FROM scout_member sm LEFT JOIN scout s ON sm.id = s.scoutedBy GROUP BY sm.id, sm.name ORDER BY scout_count DESC LIMIT 5;";
+
+    const selectResult = await queryRunner(query);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "Top Scout Data Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Top Scout Data",
+      error: error.message,
+    });
+  }
+};
+
+// GETTING SCOUTS PER EACH MONTH IN ASCENDING ORDER
+exports.monthlyscouts = async (req, res) => {
+  try {
+    // const { userId } = req.user;
+    const query = "SELECT DATE_FORMAT(s.created_at, '%Y-%m') AS month, DATE_FORMAT(s.created_at, '%M') AS month_name, COUNT(*) AS scout_count FROM scout s GROUP BY month ORDER BY month ASC;";
+
+    const selectResult = await queryRunner(query);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "Scout Data Per Month Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Monthly Scout Data",
+      error: error.message,
+    });
+  }
+};
+
 exports.getScoutByUserId = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -825,6 +879,33 @@ exports.getCities = async (req, res) => {
   }
 };
 // ###################### Get Cities End #######################################
+
+// ###################### Get All Areas  #######################################
+exports.getAllAreas = async (req, res) => {
+  try {
+    const getAreasQuery =  `SELECT  a.AreaName, c.cityName FROM  area a JOIN city c ON a.cityId = c.id`;
+    
+    selectResult = await queryRunner(getAreasQuery);
+    const data = selectResult[0];
+    console.log(selectResult)
+    if (data.length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: data,
+      });
+    } else {
+      res.status(404).json({ message: "No data Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get area list",
+      error: error.message,
+    });
+  }
+};
+// ###################### Get Areas By id End #######################################
 
 // ###################### Get Areas By id start #######################################
 exports.getAreas = async (req, res) => {

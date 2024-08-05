@@ -11,6 +11,8 @@ router.post("/createScoutUser", userController.createScoutUser);
 router.post("/signIn", userController.signIn);
 router.post("/createSOP", verifyToken, userController.createSOP);
 router.get("/viewSOP", verifyToken, userController.viewSOP);
+router.get("/getSingleSop/:sopId", verifyToken, userController.GetSingleSop);
+router.put("/updateSop", verifyToken, userController.updateSop);
 
 router.get("/scoutsMember", verifyToken, userController.getScoutsMember);
 router.get("/protected", verifyToken, userController.getUser);
