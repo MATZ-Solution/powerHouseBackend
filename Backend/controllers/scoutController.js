@@ -497,6 +497,34 @@ exports.getScoutByUserId = async (req, res) => {
     });
   }
 };
+
+// GETTING SCOUTS PER EACH MONTH IN ASCENDING ORDER
+exports.monthlyscouts = async (req, res) => {
+  try {
+    // const { userId } = req.user;
+    const query = monthlyScoutingQuery;
+
+    const selectResult = await queryRunner(query);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "Scout Data Per Month Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Monthly Scout Data",
+      error: error.message,
+    });
+  }
+};
+  
 // ###################### Get Scout data End #######################################
 
 // ###################### Get Scout Count start #######################################

@@ -39,9 +39,15 @@ FROM scout;
 
 exports.monthlyScoutingQuery = `
 SELECT 
-  DATE_FORMAT(months.month, '%Y-%m') AS month, 
+  months.month, 
   DATE_FORMAT(months.month, '%M') AS month_name, 
-  COUNT(s.id) AS scout_count
+  COUNT(s.id) AS scout_count,
+  IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 0) AS previous_month_count,
+  IFNULL(COUNT(s.id), 0) AS current_month_count,
+  IFNULL(
+    ((IFNULL(COUNT(s.id), 0) - IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 0)) / IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 1)) * 100,
+    0
+  ) AS percentage_change
 FROM 
   (SELECT 
      DATE_FORMAT(DATE_ADD(LAST_DAY(DATE_SUB(CURDATE(), INTERVAL seq MONTH)), INTERVAL 1 DAY), '%Y-%m-01') AS month
@@ -55,6 +61,9 @@ LEFT JOIN scout s ON DATE_FORMAT(s.created_at, '%Y-%m') = DATE_FORMAT(months.mon
 GROUP BY months.month
 ORDER BY months.month ASC;
 `;
+
+
+
 
 
 // `
