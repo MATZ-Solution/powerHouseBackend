@@ -23,7 +23,7 @@ const { normalizeAreaName } = require("../helper/normalizeArea.js");
 const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
 const { calculateScore } = require("../helper/calculateScore.js");
 const { insertNotification } = require("../helper/insertNotification.js");
-const { captureLog } = require("../helper/captureLog.js");
+// const { captureLog } = require("../helper/captureLog.js");
 
 
 exports.getscoutsByID = async (req, res) => {
