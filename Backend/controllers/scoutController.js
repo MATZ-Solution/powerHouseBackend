@@ -1498,6 +1498,106 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
     });
   }
 };
+
+exports.getScoutByIdWithAllInformation = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const locationId = req.params.id;
+    
+    let query = `
+    SELECT
+      scout.id,
+      scout.refrenceId,
+      scout.projectName,
+      scout.buildingType,
+      scout.city,
+      scout.address,
+      scout.contractorName,
+      scout.contractorNumber,
+      scout.assignedTo,
+      scout.sops,
+      scout.scoutedBy,
+      scout.projectType,
+      scout.created_at,
+      scout.pinLocation
+    FROM
+      scout
+`;
+    let queryParams = [];
+    if (locationId) {
+      query += ` WHERE scout.id = ?`;
+      queryParams.push(locationId);
+    }
+    
+    
+    // console.log("this is query", query, queryParams);
+    const selectResult = await queryRunner(query, queryParams);
+    // console.log("this is allocated location", selectResult[0]);
+    if (selectResult[0].length > 0) {
+      try {
+        await Promise.all(
+          selectResult[0].map(async (location) => {
+            const meetingandmeetinglogq =
+              "SELECT meetings.id, meeting_logs.id, meeting_logs.startTime, meeting_logs.endTime, meeting_logs.inProgress FROM meetings JOIN meeting_logs ON meetings.id = meeting_logs.meetingId WHERE meetings.locationId = ?";
+            const meetingandmeetinglog = await queryRunner(
+              meetingandmeetinglogq,
+              [location.id]
+            );
+            location.meeting = meetingandmeetinglog[0];
+
+            const filesQuery =
+              "SELECT fileUrl, fileKey FROM location_files WHERE scouted_location = ?";
+            const filesResult = await queryRunner(filesQuery, [location.id]);
+            console.log("this is files", filesResult[0]);
+            location.files = filesResult[0];
+
+            if (location.sops) {
+              const sopQuery = `SELECT sop.id, sop.projectType, sop.projectDomain, sop.city, sop.area, sop.scoutMemberID, sm.name AS scoutMemberName FROM sop JOIN scout_member sm ON sop.scoutMemberID = sm.id WHERE sop.id IN (?)`;
+              const sopResult = await queryRunner(sopQuery, [location.sops]);
+              location.sops = sopResult[0];
+            }
+
+            if (location.assignedTo) {
+              const assignedToQuery =
+                "SELECT id, name, email, phoneNumber,role As scouterRole FROM scout_member WHERE id IN (?)";
+              const assignedToResult = await queryRunner(assignedToQuery, [
+                location.assignedTo,
+              ]);
+              location.assignedTo = assignedToResult[0];
+            }
+          })
+        );
+
+        // console.log("this is allocated location", selectResult[0][0].assignedTo);
+        res.status(200).json({
+          statusCode: 200,
+          message: "Success",
+          data: selectResult[0][0],
+        });
+      } catch (error) {
+        console.error("Error processing locations", error);
+        res.status(500).json({
+          statusCode: 500,
+          message: "Internal Server Error",
+        });
+      }
+    } else {
+      res.status(404).json({
+        statusCode: 404,
+        message: "Not found",
+        
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching allocated locations:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Scout Data",
+      error: error.message,
+    });
+  }
+};
+
 // ###################### GET LONGITUDE AND LATITUDE END #######################################
 
 // ###################### GET LONGITUDE AND LATITUDE START #######################################
