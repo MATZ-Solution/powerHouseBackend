@@ -21,8 +21,9 @@ exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area
 exports.insertScoutUserQuery = "INSERT INTO scout_member (name,phoneNumber,email,address,position,department,password,created_at) VALUES (?,?,?,?,?,?,?,?)";
 exports.countScoutQuery = `
 SELECT 
-    COUNT(*) AS total,
-    (SELECT COUNT(*) FROM scout_member) AS user,
+    (SELECT COUNT(*) FROM scout) AS total_scouts,
+    (SELECT COUNT(*) FROM scout_member) AS total_users,
+    (SELECT COUNT(*) FROM scout_member WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_users,
     (SELECT COUNT(*) FROM scout WHERE assignedTo IS NULL) AS UnAllotedLocation,
     (SELECT COUNT(*) FROM scout WHERE assignedTo IS NOT NULL) AS AllotedLocation,
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Residential') AS Residential,
@@ -34,13 +35,13 @@ SELECT
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Residential' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Residential,
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Commercial' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Commercial,
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Project' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Project
-FROM scout;
+FROM dual;
 `;
 
 exports.monthlyScoutingQuery = `
 SELECT 
   months.month, 
-  DATE_FORMAT(months.month, '%M') AS month_name, 
+  DATE_FORMAT(months.month, '%b') AS month_name, 
   COUNT(s.id) AS scout_count,
   IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 0) AS previous_month_count,
   IFNULL(COUNT(s.id), 0) AS current_month_count,
@@ -59,7 +60,8 @@ FROM
   ) AS months
 LEFT JOIN scout s ON DATE_FORMAT(s.created_at, '%Y-%m') = DATE_FORMAT(months.month, '%Y-%m')
 GROUP BY months.month
-ORDER BY months.month ASC;
+ORDER BY months.month ASC
+;
 `;
 
 

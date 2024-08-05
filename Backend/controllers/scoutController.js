@@ -463,7 +463,8 @@ exports.monthlyscouts = async (req, res) => {
         .status(200)
         .json({ data: selectResult[0], message: "Scout Data Per Month Not Found" });
     }
-  } catch (error) {
+  } 
+  catch (error) {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Get Monthly Scout Data",
