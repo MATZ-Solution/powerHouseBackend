@@ -119,9 +119,18 @@ exports.acceptHandshake = async (req, res) => {
       if(update[0].affectedRows===0){
         return res.status(400).json({ message: 'Error updating handshake status' });
       }
-      console.log('Handshake:',action);
-      await insertNotification(handshake.requestedBy, `${req.user.name} has ${action}ed your handshake request`, handshake.locationId);
-      return res.status(200).json({ message: `Handshake ${action}ed successfully` });
+      
+      const updateRequestNotification = queryRunner('UPDATE notification SET isInteracted=? WHERE isHandShake=? AND relevantId=? AND userId=?', [
+        1, 1, handshakeId, userId
+      ]);
+      
+      if(updateRequestNotification[0].affectedRows>0){
+        await insertNotification(handshake.requestedBy, `${req.user.name} has ${action}ed your handshake request`, handshake.locationId);
+        return res.status(200).json({ message: `Handshake ${action}ed successfully` });
+  
+      }else{
+        return res.status(200).json({ message: `Handshake ${action}ed successfully` });
+      }
   
     } catch (error) {
       console.error('Error updating handshake status:', error);

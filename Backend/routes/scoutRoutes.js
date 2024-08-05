@@ -57,7 +57,7 @@ router.get('/scoutMap', scoutController.scoutMap);
 // router.get('/getSubAreas', scoutController.getSubAreas);
 router.put('/editScout/:id', verifyToken,s3Upload.array('files', 5),scoutController.UpdateScoutedLocation);
 
-router.delete('/deleteScout/:id',scoutController.deletScout);
+router.delete('/deleteScout/:id', verifyToken,scoutController.deleteScout);
 
 
 

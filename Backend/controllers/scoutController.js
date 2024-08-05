@@ -23,6 +23,7 @@ const { normalizeAreaName } = require("../helper/normalizeArea.js");
 const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
 const { calculateScore } = require("../helper/calculateScore.js");
 const { insertNotification } = require("../helper/insertNotification.js");
+const { captureLog } = require("../helper/captureLog.js");
 
 
 exports.getscoutsByID = async (req, res) => {
@@ -1744,7 +1745,7 @@ exports.UpdateScoutedLocation = async (req, res) => {
   }
 };
 
-exports.deletScout = async (req, res) => {
+exports.deleteScout = async (req, res) => {
   const { id } = req.params;
   let query = `DELETE FROM scout where id = ${id}`;
   try {
