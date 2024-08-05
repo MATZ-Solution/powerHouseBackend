@@ -21,8 +21,9 @@ exports.insertScoutQuery = "INSERT INTO scout (projectName,projectType,city,area
 exports.insertScoutUserQuery = "INSERT INTO scout_member (name,phoneNumber,email,address,position,department,password,created_at) VALUES (?,?,?,?,?,?,?,?)";
 exports.countScoutQuery = `
 SELECT 
-    COUNT(*) AS total,
-    (SELECT COUNT(*) FROM scout_member) AS user,
+    (SELECT COUNT(*) FROM scout) AS total_scouts,
+    (SELECT COUNT(*) FROM scout_member) AS total_users,
+    (SELECT COUNT(*) FROM scout_member WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_users,
     (SELECT COUNT(*) FROM scout WHERE assignedTo IS NULL) AS UnAllotedLocation,
     (SELECT COUNT(*) FROM scout WHERE assignedTo IS NOT NULL) AS AllotedLocation,
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Residential') AS Residential,
@@ -34,8 +35,39 @@ SELECT
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Residential' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Residential,
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Commercial' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Commercial,
     (SELECT COUNT(*) FROM scout WHERE buildingType = 'Project' AND DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')) AS current_month_Project
-FROM scout;
+FROM dual;
 `;
+
+exports.monthlyScoutingQuery = `
+SELECT 
+  months.month, 
+  DATE_FORMAT(months.month, '%b') AS month_name, 
+  COUNT(s.id) AS scout_count,
+  IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 0) AS previous_month_count,
+  IFNULL(COUNT(s.id), 0) AS current_month_count,
+  IFNULL(
+    ((IFNULL(COUNT(s.id), 0) - IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 0)) / IFNULL(LAG(COUNT(s.id)) OVER (ORDER BY months.month ASC), 1)) * 100,
+    0
+  ) AS percentage_change
+FROM 
+  (SELECT 
+     DATE_FORMAT(DATE_ADD(LAST_DAY(DATE_SUB(CURDATE(), INTERVAL seq MONTH)), INTERVAL 1 DAY), '%Y-%m-01') AS month
+   FROM 
+     (SELECT 0 seq UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 
+      UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL 
+      SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11) AS a
+   WHERE DATE_FORMAT(DATE_ADD(LAST_DAY(DATE_SUB(CURDATE(), INTERVAL seq MONTH)), INTERVAL 1 DAY), '%Y') = DATE_FORMAT(CURDATE(), '%Y')
+  ) AS months
+LEFT JOIN scout s ON DATE_FORMAT(s.created_at, '%Y-%m') = DATE_FORMAT(months.month, '%Y-%m')
+GROUP BY months.month
+ORDER BY months.month ASC
+;
+`;
+
+
+
+
+
 // `
 // Select COUNT(*)as total,
 // (select count(*) from scout_member) as user,

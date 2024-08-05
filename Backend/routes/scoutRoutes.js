@@ -57,7 +57,7 @@ router.get('/scoutMap', scoutController.scoutMap);
 // router.get('/getSubAreas', scoutController.getSubAreas);
 router.put('/editScout/:id', verifyToken,s3Upload.array('files', 5),scoutController.UpdateScoutedLocation);
 
-router.delete('/deleteScout/:id',scoutController.deletScout);
+router.delete('/deleteScout/:id', verifyToken,scoutController.deleteScout);
 
 
 
@@ -72,7 +72,7 @@ router.get('/getArchitecture', verifyToken ,scoutController.getArchitecture);
 router.get('/getBuilder', verifyToken ,scoutController.getBuilder);
 router.get('/getElectricians', verifyToken ,scoutController.getElectrician);
 router.put('/updateScouteStatus', verifyToken , scoutController.updateScoutStatus);
-// router.put('/updateScouteStatus', scoutController.updateScoutStatus);
+router.get('/logs/:id',verifyToken,scoutController.getLogsById)
 
 
 

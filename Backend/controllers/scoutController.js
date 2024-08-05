@@ -10,7 +10,8 @@ const {
   insertArchitectureQuery,
   insertBuilderQuery,
   insertElectricianQuery,
-  updateScouteStatusQuery
+  updateScouteStatusQuery,
+  monthlyScoutingQuery
   // getAreasQuery,
 } = require("../constants/queries.js");
 const { queryRunner } = require("../helper/queryRunner.js");
@@ -22,6 +23,7 @@ const { normalizeAreaName } = require("../helper/normalizeArea.js");
 const { buildDynamicQuery } = require("../helper/dynamicQuery.js");
 const { calculateScore } = require("../helper/calculateScore.js");
 const { insertNotification } = require("../helper/insertNotification.js");
+const { captureLog } = require("../helper/captureLog.js");
 
 
 exports.getscoutsByID = async (req, res) => {
@@ -458,7 +460,7 @@ exports.topscouts = async (req, res) => {
 exports.monthlyscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    const query = "SELECT DATE_FORMAT(s.created_at, '%Y-%m') AS month, DATE_FORMAT(s.created_at, '%M') AS month_name, COUNT(*) AS scout_count FROM scout s GROUP BY month ORDER BY month ASC;";
+    const query = monthlyScoutingQuery;
 
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
@@ -472,7 +474,8 @@ exports.monthlyscouts = async (req, res) => {
         .status(200)
         .json({ data: selectResult[0], message: "Scout Data Per Month Not Found" });
     }
-  } catch (error) {
+  } 
+  catch (error) {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Get Monthly Scout Data",
@@ -507,6 +510,34 @@ exports.getScoutByUserId = async (req, res) => {
     });
   }
 };
+
+// GETTING SCOUTS PER EACH MONTH IN ASCENDING ORDER
+exports.monthlyscouts = async (req, res) => {
+  try {
+    // const { userId } = req.user;
+    const query = monthlyScoutingQuery;
+
+    const selectResult = await queryRunner(query);
+    if (selectResult[0].length > 0) {
+      res.status(200).json({
+        statusCode: 200,
+        message: "Success",
+        data: selectResult[0],
+      });
+    } else {
+      res
+        .status(200)
+        .json({ data: selectResult[0], message: "Scout Data Per Month Not Found" });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Failed to Get Monthly Scout Data",
+      error: error.message,
+    });
+  }
+};
+  
 // ###################### Get Scout data End #######################################
 
 // ###################### Get Scout Count start #######################################
@@ -1751,7 +1782,7 @@ exports.UpdateScoutedLocation = async (req, res) => {
   }
 };
 
-exports.deletScout = async (req, res) => {
+exports.deleteScout = async (req, res) => {
   const { id } = req.params;
   let query = `DELETE FROM scout where id = ${id}`;
   try {
@@ -2196,3 +2227,80 @@ exports.updateScoutStatus = async (req, res) => {
 };
 
 // ###################### UPDATE SCOUTE Status End #######################################
+exports.getLogsById=async (req, res) =>{
+  try {
+    const {userId}=req?.user
+    const scoutQuery = `
+      SELECT * FROM scout WHERE id = $1;
+    `;
+    const scoutResult = await queryRunner(scoutQuery, [userId]);
+    if (scoutResult[0].length === 0) {
+      throw new Error('Scout not found');
+    }
+    const scout = scoutResult[0][0];
+    const scoutMemberQuery = `
+    SELECT * FROM scout_member WHERE id = $1;
+  `;
+  const scoutMemberResult = await queryRunner(scoutMemberQuery, [scout.scoutedBy]);
+  const sopQuery = `
+  SELECT * FROM sop WHERE scoutMemberID = $1;
+`;
+const sopResult = await queryRunner(sopQuery, [scout.scoutedBy]);
+
+const meetingQuery = `
+  SELECT * FROM meeting WHERE locationId = $1;
+`;
+const meetingResult = await queryRunner(meetingQuery, [scout.id]);
+
+const meetingLogQuery = `
+  SELECT * FROM meeting_log WHERE meetingId IN (
+    SELECT id FROM meeting WHERE locationId = $1
+  );
+`;
+const meetingLogResult = await queryRunner(meetingLogQuery, [scout.id]);
+const architectureQuery = `
+      SELECT * FROM architecture WHERE id IN (
+        SELECT unnest(string_to_array(scout.architectures, ',')::int[])
+      );
+    `;
+    const architectureResult = await queryRunner(architectureQuery);
+
+    const builderQuery = `
+      SELECT * FROM builder WHERE id IN (
+        SELECT unnest(string_to_array(scout.builders, ',')::int[])
+      );
+    `;
+    const builderResult = await queryRunner(builderQuery);
+
+    const electricianQuery = `
+      SELECT * FROM electrician WHERE id IN (
+        SELECT unnest(string_to_array(scout.electricians, ',')::int[])
+      );
+    `;
+    const electricianResult = await queryRunner(electricianQuery);
+
+    const handshakeQuery = `
+      SELECT * FROM handshake WHERE locationId = $1;
+    `;
+    const handshakeResult = await queryRunner(handshakeQuery, [scout.id]);
+
+    const changeLogQuery = `
+      SELECT * FROM ChangeLog WHERE record_id = $1 AND table_name = 'scout';
+    `;
+    const changeLogResult = await queryRunner(changeLogQuery, [scoutId]);
+    res.status(200).json({
+      scout,
+      scoutMember: scoutMemberResult.rows[0],
+      sop: sopResult.rows,
+      meetings: meetingResult.rows,
+      meetingLogs: meetingLogResult.rows,
+      architectures: architectureResult.rows,
+      builders: builderResult.rows,
+      electricians: electricianResult.rows,
+      handshakes: handshakeResult.rows,
+      changeLogs: changeLogResult.rows,
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } 
+}
