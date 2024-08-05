@@ -446,7 +446,7 @@ exports.topscouts = async (req, res) => {
 // GETTING SCOUTS PER EACH MONTH IN ASCENDING ORDER
 exports.monthlyscouts = async (req, res) => {
   try {
-    // const { userId } = req.user;
+
     const query = "SELECT DATE_FORMAT(s.created_at, '%Y-%m') AS month, DATE_FORMAT(s.created_at, '%M') AS month_name, COUNT(*) AS scout_count FROM scout s GROUP BY month ORDER BY month ASC;";
 
     const selectResult = await queryRunner(query);
@@ -461,7 +461,8 @@ exports.monthlyscouts = async (req, res) => {
         .status(200)
         .json({ data: selectResult[0], message: "Scout Data Per Month Not Found" });
     }
-  } catch (error) {
+  } 
+  catch (error) {
     return res.status(500).json({
       statusCode: 500,
       message: "Failed to Get Monthly Scout Data",
