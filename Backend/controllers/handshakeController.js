@@ -125,6 +125,7 @@ exports.acceptHandshake = async (req, res) => {
       if(update[0].affectedRows===0){
         return res.status(400).json({ message: 'Error updating handshake status' });
       }
+
       const insertInCaptureLog = await queryRunner(
         "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
         [handshakeId
