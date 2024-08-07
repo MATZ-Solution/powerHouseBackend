@@ -446,11 +446,14 @@ exports.createSOP = async (req, res) => {
                 );
 
                 if (result[0].affectedRows > 0) {
-                  const insertInCaptureLog = await queryRunner(
-                    "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?),(?, ?, ?)",
-                    [[scout.sops ? `${scout.sops},${sopId}` : sopId, scout.id,'sops'],[user, scout.id,'scout_members_sop']]
+                  const insertInCaptureLog1 = await queryRunner(
+                    "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?)",
+                    [scout.sops ? `${scout.sops},${sopId}` : sopId, scout.id,'sops']
                   );
-                  
+                  const insertInCaptureLog2 = await queryRunner(
+                    "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?)",
+                    [user, scout.id,'scout_members_sop']
+                  );
                   await Promise.all(
                     userIds.map(async (userId) => {
                       try {
