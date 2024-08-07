@@ -126,20 +126,17 @@ exports.acceptHandshake = async (req, res) => {
         return res.status(400).json({ message: 'Error updating handshake status' });
       }
       const insertInCaptureLog = await queryRunner(
-        "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?),(?, ?, ?,?,?)",
-        [[handshakeId
+        "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+        [handshakeId
         , 
-        handshake[0].locationId
-        ,'handshake','accepted',updatedAcceptedBy],[handshakeId
-          , 
-          handshake[0].locationId
-          ,'handshake','rejected',updatedRejectedBy]]
+        handshake.locationId
+        ,'handshake',action,userId]
       );
-      const updateRequestNotification = queryRunner('UPDATE notification SET isInteracted=? WHERE isHandShake=? AND relevantId=? AND userId=?', [
+      const updateRequestNotification = queryRunner('UPDATE notifications SET isInteracted=? WHERE isHandShake=? AND relevantId=? AND userId=?', [
         1, 1, handshakeId, userId
       ]);
       
-      if(updateRequestNotification[0].affectedRows>0){
+      if(updateRequestNotification){
         
         await insertNotification(handshake.requestedBy, `${req.user.name} has ${action}ed your handshake request`, handshake.locationId);
         return res.status(200).json({ message: `Handshake ${action}ed successfully` });
