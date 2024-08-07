@@ -1775,7 +1775,7 @@ exports.UpdateScoutedLocation = async (req, res) => {
     if (insertResult[0].affectedRows > 0) {
       const insertInCaptureLog = await queryRunner(
         "INSERT INTO ChangeLog(message, locationId,table_name,operation_type,changedBy) VALUES (?, ?, ?,?,?)",
-        [`Location$${'latest'}`, scoutId,'scout','update',userId]
+        [`Location$${'latest'}`, id,'scout','update',userId]
       );
       return res.status(200).json({
         statusCode: 200,
