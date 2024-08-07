@@ -131,13 +131,13 @@ exports.acceptHandshake = async (req, res) => {
         [handshakeId
         , 
         handshake.locationId
-        ,'handshake','accepted',userId]
+        ,'handshake',action,userId]
       );
-      const updateRequestNotification = queryRunner('UPDATE notification SET isInteracted=? WHERE isHandShake=? AND relevantId=? AND userId=?', [
+      const updateRequestNotification = queryRunner('UPDATE notifications SET isInteracted=? WHERE isHandShake=? AND relevantId=? AND userId=?', [
         1, 1, handshakeId, userId
       ]);
       
-      if(updateRequestNotification[0].affectedRows>0){
+      if(updateRequestNotification){
         
         await insertNotification(handshake.requestedBy, `${req.user.name} has ${action}ed your handshake request`, handshake.locationId);
         return res.status(200).json({ message: `Handshake ${action}ed successfully` });
