@@ -372,9 +372,13 @@ exports.scout = async (req, res) => {
 
       if (notificationInserted && assignedTo) {
         const assignedToArray = assignedTo.split(",");
-        const insertInCaptureLog = await queryRunner(
-          "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?),(?, ?, ?)",
-          [[sops, scoutId,'sops'],[assignedTo, scoutId,'scout_members_sop']]
+        const insertInCaptureLog1 = await queryRunner(
+          "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?)",
+          [sops, scoutId,'sops']
+        );
+        const insertInCaptureLog2 = await queryRunner(
+          "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?)",
+          [assignedTo, scoutId,'scout_members_sop']
         );
         
         for (const assignedToId of assignedToArray) {
