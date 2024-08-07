@@ -209,7 +209,7 @@ exports.scout = async (req, res) => {
     } = req.body;
 
     // // console.log("Request body:", req.body);
-
+    let isSop=false
     const currentDate = new Date();
 
     // Normalize area value
@@ -294,6 +294,7 @@ exports.scout = async (req, res) => {
         Electricians,
         // scoutType
       ];
+      isSop=true
     } else {
       insertQuery = `
         INSERT INTO scout (
@@ -322,6 +323,7 @@ exports.scout = async (req, res) => {
         Electricians,
 
       ];
+      isSop=false
     }
 
     // Execute insert query
@@ -370,6 +372,11 @@ exports.scout = async (req, res) => {
 
       if (notificationInserted && assignedTo) {
         const assignedToArray = assignedTo.split(",");
+        const insertInCaptureLog = await queryRunner(
+          "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?),(?, ?, ?)",
+          [[sops, scoutId,'sops'],[assignedTo, scoutId,'scout_members_sop']]
+        );
+        
         for (const assignedToId of assignedToArray) {
           const result = await insertNotification(
             assignedToId,
@@ -1061,6 +1068,10 @@ exports.addUnassignedScouter = async (req, res) => {
     let [selectResult] = await queryRunner(query, [setScoutId, projectID]);
 
     if (selectResult.affectedRows > 0) {
+      const insertInCaptureLog = await queryRunner(
+        "INSERT INTO ChangeLog(changed_data, locationId,operation_type) VALUES (?, ?, ?)",
+        [scoutID, projectID,'assigned']
+      );
       return res.status(200).json({ message: "Successfully Assigned Scouter" });
     }
     res.status(500).json({ message: "Failed To Assigned Scouter" });
@@ -1711,6 +1722,7 @@ exports.scoutMap = async (req, res) => {
 // ###################### EDIT SCOUT LOCATION #######################################
 exports.UpdateScoutedLocation = async (req, res) => {
   const { id } = req.params;
+  const {userId} = req.user;
   const { projectName,
     type,
     size,
@@ -1761,6 +1773,10 @@ exports.UpdateScoutedLocation = async (req, res) => {
         Electricians
     ]);
     if (insertResult[0].affectedRows > 0) {
+      const insertInCaptureLog = await queryRunner(
+        "INSERT INTO ChangeLog(message, locationId,table_name,operation_type,changedBy) VALUES (?, ?, ?,?,?)",
+        [`Location$${'latest'}`, scoutId,'scout','update',userId]
+      );
       return res.status(200).json({
         statusCode: 200,
         message: "Successfully Edit Scout",
@@ -2200,6 +2216,7 @@ exports.getElectrician = async (req, res) => {
 
 exports.updateScoutStatus = async (req, res) => {
   const { scoutId, status } = req.body;
+  const {userId}=req?.user
   console.log('req.body update scout', req.body)
   try {
     const Result = await queryRunner(updateScouteStatusQuery, [
@@ -2207,6 +2224,10 @@ exports.updateScoutStatus = async (req, res) => {
       scoutId,
     ]);
     if (Result[0].affectedRows > 0) {
+      const insertInCaptureLog = await queryRunner(
+        "INSERT INTO ChangeLog(message, locationId,table_name,operation_type,changedBy) VALUES (?, ?, ?,?,?)",
+        [`Status$${status}`, scoutId,'scout','update',userId]
+      );
       return res.status(200).json({
         statusCode: 200,
         message: "Successfully Update Scout Status",
@@ -2230,76 +2251,204 @@ exports.updateScoutStatus = async (req, res) => {
 exports.getLogsById=async (req, res) =>{
   try {
     const {userId}=req?.user
+    const {id}=req?.params
     const scoutQuery = `
-      SELECT * FROM scout WHERE id = $1;
+      SELECT * FROM scout WHERE id = ?;
     `;
-    const scoutResult = await queryRunner(scoutQuery, [userId]);
+    const scoutResult = await queryRunner(scoutQuery, [id]);
     if (scoutResult[0].length === 0) {
       throw new Error('Scout not found');
     }
     const scout = scoutResult[0][0];
     const scoutMemberQuery = `
-    SELECT * FROM scout_member WHERE id = $1;
+    SELECT * FROM scout_member WHERE id = ?;
   `;
   const scoutMemberResult = await queryRunner(scoutMemberQuery, [scout.scoutedBy]);
-  const sopQuery = `
-  SELECT * FROM sop WHERE scoutMemberID = $1;
-`;
-const sopResult = await queryRunner(sopQuery, [scout.scoutedBy]);
+  // now look into changeLog table and process the individual logs
+  const changeLogQuery = ` SELECT * FROM ChangeLog WHERE locationId = ? ORDER BY createdAt DESC;`;
+  const changeLogResult = await queryRunner(changeLogQuery, [id]);
+  if (changeLogResult[0].length === 0) {
+    return res.status(200).json({
+      statusCode: 200,
+      message: 'Success',
+      data: [],
+    });
+    
+  }else{
+    // make an array of logs object with date as key and logs array as value insert the logs in the array based on the same date
+    const logsArray = Promise.all(changeLogResult[0].map(async (log) => {
+      if(log?.table_name==='scout_members_sop'){
+        const getAllotedUsersQuery = `SELECT * FROM scout_members WHERE id IN (?)`;
+        const allotedUsers = await queryRunner(getAllotedUsersQuery, [log?.changed_data]);
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'Alloted',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:"Location alloted",
+            allotedUsers: allotedUsers[0],
+          },
+        };
+      }
+      else if(log?.table_name==='sops'){
+        const getSopQuery = `SELECT * FROM sops WHERE id IN (?)`;
+        const sop = await queryRunner(getSopQuery, [log?.changed_data]);
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'SOP',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:`Location connected to SOP(s)- ${sop[0].map(s=>s.area).join(', ')}`,
+            sop: sop[0],
 
-const meetingQuery = `
-  SELECT * FROM meeting WHERE locationId = $1;
-`;
-const meetingResult = await queryRunner(meetingQuery, [scout.id]);
+          },
+        };
+      }
+      else if(log?.table_name==='handshake'){
+        const handShakeQuery = `SELECT * FROM handshake WHERE id =? AND locationId = ?`;
+        const handShake = await queryRunner(handShakeQuery, [log?.record_id, id]);
+        const handShakeRequestedByQuery = `SELECT * FROM scout_member WHERE id = ?`;
+          const handShakeRequestedBy = await queryRunner(handShakeRequestedByQuery, [handShake[0][0].requestedBy]);
+        if(log?.message==='requested'){
+          
+          const handShakeRequestedToQuery = `SELECT * FROM scout_member WHERE id IN (?)`;
+          const handShakeRequestedTo = await queryRunner(handShakeRequestedToQuery, [log?.changed_data]);
+          return {
+            date: log?.timestamp,
+            log: {
+              type: 'Handshake',
+              buildingType:scout.buildingType,
+              projectName:scout.projectName,
+              message:`Handshake request initiated on ${scout.projectName} project by ${handShakeRequestedBy[0][0].name}`,
+              handShakeRequestedBy: handShakeRequestedBy[0][0],
+              handShakeRequestedTo: handShakeRequestedTo[0],
+            },
+        }
+       
+      }
+      else if(log?.message==='accepted' || log?.message==='rejected'){
+        const handShakeRequestedToQuery = `SELECT * FROM scout_member WHERE id = ?`;
+        const handShakeRequestedTo = await queryRunner(handShakeRequestedToQuery, [log?.changed_data]);
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'Handshake',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:`Handshake request ${
+              log?.message==='accepted' ? 'accepted' : 'rejected'
+            } on ${scout.projectName} project by ${handShakeRequestedTo[0].name}`,
+            handShakeRequestedBy: handShakeRequestedBy[0][0],
+            handShakeRequestedTo: handShakeRequestedTo[0],
+          },
+      }
+    }
+      }
+      else if(log?.table_name==='meetings'){
+      const selectMeetingQuery = `SELECT * FROM meetings WHERE locationId = ?`;
+      const meeting = await queryRunner(selectMeetingQuery, [id]);
+      const selectMeetingLogQuery = `SELECT * FROM meeting_logs WHERE id = ?`;
+      const meetingLogs = await queryRunner(selectMeetingLogQuery, [log?.record_id]);
+      const meetingMembersQuery = `SELECT * FROM scout_member WHERE id IN (?)`;
+      const meetingMembers = await queryRunner(meetingMembersQuery, [meetingLogs[0][0].members]);
+      if(log?.message==='started'){
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'Meeting',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:`Meeting started on ${scout.projectName} project`,
+            meeting: meeting[0][0],
+            meetingLogs: meetingLogs[0],
+            meetingMembers: meetingMembers[0],
+          },
+        }
+      }else if(log?.message==='ended'){
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'Meeting',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:`Meeting ended on ${scout.projectName} project`,
+            meeting: meeting[0][0],
+            meetingLogs: meetingLogs[0],
+            meetingMembers: meetingMembers[0],
+          },
+        }
+      }else if(log?.message==='added'){
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'Meeting',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:`Meeting added on ${scout.projectName} project`,
+            meeting: meeting[0][0],
+            meetingLogs: meetingLogs[0],
+            meetingMembers: meetingMembers[0],
+          },
+        }
+      }
 
-const meetingLogQuery = `
-  SELECT * FROM meeting_log WHERE meetingId IN (
-    SELECT id FROM meeting WHERE locationId = $1
-  );
-`;
-const meetingLogResult = await queryRunner(meetingLogQuery, [scout.id]);
-const architectureQuery = `
-      SELECT * FROM architecture WHERE id IN (
-        SELECT unnest(string_to_array(scout.architectures, ',')::int[])
-      );
-    `;
-    const architectureResult = await queryRunner(architectureQuery);
 
-    const builderQuery = `
-      SELECT * FROM builder WHERE id IN (
-        SELECT unnest(string_to_array(scout.builders, ',')::int[])
-      );
-    `;
-    const builderResult = await queryRunner(builderQuery);
 
-    const electricianQuery = `
-      SELECT * FROM electrician WHERE id IN (
-        SELECT unnest(string_to_array(scout.electricians, ',')::int[])
-      );
-    `;
-    const electricianResult = await queryRunner(electricianQuery);
-
-    const handshakeQuery = `
-      SELECT * FROM handshake WHERE locationId = $1;
-    `;
-    const handshakeResult = await queryRunner(handshakeQuery, [scout.id]);
-
-    const changeLogQuery = `
-      SELECT * FROM ChangeLog WHERE record_id = $1 AND table_name = 'scout';
-    `;
-    const changeLogResult = await queryRunner(changeLogQuery, [scoutId]);
-    res.status(200).json({
-      scout,
-      scoutMember: scoutMemberResult.rows[0],
-      sop: sopResult.rows,
-      meetings: meetingResult.rows,
-      meetingLogs: meetingLogResult.rows,
-      architectures: architectureResult.rows,
-      builders: builderResult.rows,
-      electricians: electricianResult.rows,
-      handshakes: handshakeResult.rows,
-      changeLogs: changeLogResult.rows,
-    })
+      }
+      else if(log?.table_name==='scout'){
+        if(log?.operation_type==='update'){
+          const selectUpdatedByQuery = `SELECT * FROM scout_member WHERE id = ?`;
+          const updatedBy = await queryRunner(selectUpdatedByQuery, [log?.changedBy]);
+          return {
+            date: log?.timestamp,
+            log: {
+              type: 'Updates',
+              buildingType:scout.buildingType,
+              projectName:scout.projectName,
+              message:`${
+              log?.message?.split('$')[0]
+              } is updated to ${log?.message?.split('$')[1]}`,
+              updatedBy: updatedBy[0][0],
+            },
+          }
+        }
+      }
+      else if(log?.operation_type=='assigned'){
+        const selectAssignedToQuery = `SELECT * FROM scout_member WHERE id IN (?)`;
+        const assignedTo = await queryRunner(selectAssignedToQuery, [log?.changed_data]);
+        return {
+          date: log?.timestamp,
+          log: {
+            type: 'Assigned',
+            buildingType:scout.buildingType,
+            projectName:scout.projectName,
+            message:`Location assigned to ${assignedTo[0].map(a=>a.name).join(', ')}`,
+            assignedTo: assignedTo[0],
+          },
+        }
+      }
+  }));
+  return res.status(200).json({
+    statusCode: 200,
+    message: 'Success',
+    data: [
+      ...logsArray,
+      {
+        date:scout.created_at,
+        log:{
+          type:'Creation',
+          buildingType:scout.buildingType,
+          projectName:scout.projectName,
+          message:`${scout.projectName} alloted to`,
+          created_by:scoutMemberResult[0][0],
+        }
+      }
+    ],
+  });
+  }
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   } 

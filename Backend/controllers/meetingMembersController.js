@@ -100,6 +100,13 @@ exports.addMeeting = async (req, res) => {
         ]);
       }
       if (insertInMeetingLogResult[0].affectedRows > 0) {
+        const insertInCaptureLog = await queryRunner(
+          "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+          [insertInMeetingLogResult[0].insertId
+          , 
+          locationId
+          ,'meetings','added',members + "," + userId.toString()]
+        );
         return res.status(200).json({
           statusCode: 200,
           message: "Meeting Created successfully",
@@ -136,6 +143,13 @@ exports.addMeeting = async (req, res) => {
         ]);
       }
       if (createLogResult[0].affectedRows > 0) {
+        const insertInCaptureLog = await queryRunner(
+          "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+          [insertInMeetingLogResult[0].insertId
+          , 
+          locationId
+          ,'meetings','added',members + "," + userId.toString()]
+        );
         return res.status(200).json({
           statusCode: 200,
           message: "Meeting Created successfully",
@@ -174,6 +188,7 @@ exports.updateMeetingLogs = async (req, res) => {
 
     // now if meetingLogId is available then update the meeting logs
     if (meetingLogId) {
+      const getMeetingLog= await queryRunner(`SELECT meetings.id, meetings.locationId, meeting_logs.id as meetingLogId FROM meetings JOIN meeting_logs ON meetings.id = meeting_logs.meetingId WHERE meeting_logs.id = ?`,[meetingLogId]);
       // make a dynamic query to update the meeting logs
       let updateQuery = `UPDATE meeting_logs SET `;
       if (startTime) {
@@ -192,6 +207,13 @@ exports.updateMeetingLogs = async (req, res) => {
       updateQuery += ` WHERE id = ${meetingLogId}`;
       const updateResult = await queryRunner(updateQuery);
       if (updateResult[0].affectedRows > 0) {
+        const insertInCaptureLog = await queryRunner(
+          "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+          [meetingLogId
+          , 
+          getMeetingLog[0][0].locationId
+          ,'meetings',endTime?'ended':startTime?"started":"",members]
+        );
         if (nextMeetingDate) {
           const createNextMeetingLogQuery = `INSERT INTO meeting_logs (meetingId,startTime) VALUES (?,?)`;
           const createNextMeetingLogResult = await queryRunner(
@@ -199,6 +221,13 @@ exports.updateMeetingLogs = async (req, res) => {
             [meetingId, nextMeetingDate]
           );
           if (createNextMeetingLogResult[0].affectedRows > 0) {
+            const insertInCaptureLog = await queryRunner(
+              "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+              [createNextMeetingLogResult[0].insertId
+              , 
+              getMeetingLog[0][0].locationId
+              ,'meetings','added',members]
+            );
             return res.status(200).json({
               statusCode: 200,
               message: "Meeting Logs Updated successfully",
@@ -206,6 +235,13 @@ exports.updateMeetingLogs = async (req, res) => {
             });
           }
         } else {
+          const insertInCaptureLog = await queryRunner(
+            "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+            [createNextMeetingLogResult[0].insertId
+            , 
+            getMeetingLog[0][0].locationId
+            ,'meetings','added',members]
+          );
           return res.status(200).json({
             statusCode: 200,
             message: "Meeting Logs Updated successfully",

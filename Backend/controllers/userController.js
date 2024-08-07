@@ -446,7 +446,11 @@ exports.createSOP = async (req, res) => {
                 );
 
                 if (result[0].affectedRows > 0) {
-                  // console.log("Scout assigned successfully");
+                  const insertInCaptureLog = await queryRunner(
+                    "INSERT INTO ChangeLog(changed_data, locationId,table_name) VALUES (?, ?, ?),(?, ?, ?)",
+                    [[scout.sops ? `${scout.sops},${sopId}` : sopId, scout.id,'sops'],[user, scout.id,'scout_members_sop']]
+                  );
+                  
                   await Promise.all(
                     userIds.map(async (userId) => {
                       try {

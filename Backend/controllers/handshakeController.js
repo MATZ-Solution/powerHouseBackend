@@ -39,6 +39,12 @@ exports.requestHandShake = async (req, res) => {
 
         if (insertInHandshake[0].affectedRows > 0) {
             // Send notifications to each new user
+            const insertInCaptureLog = await queryRunner(
+              "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
+              [insertInHandshake[0].insertId
+              , locationId,'handshake','requested',joinedNewUsers]
+            );
+            
             for (const user of newUsers) {
                 await insertNotification(user, `Handshake Request - ${req.user.name}`, insertInHandshake[0].insertId, true);
             }
@@ -119,12 +125,22 @@ exports.acceptHandshake = async (req, res) => {
       if(update[0].affectedRows===0){
         return res.status(400).json({ message: 'Error updating handshake status' });
       }
-      
+      const insertInCaptureLog = await queryRunner(
+        "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?),(?, ?, ?,?,?)",
+        [[handshakeId
+        , 
+        handshake[0].locationId
+        ,'handshake','accepted',updatedAcceptedBy],[handshakeId
+          , 
+          handshake[0].locationId
+          ,'handshake','rejected',updatedRejectedBy]]
+      );
       const updateRequestNotification = queryRunner('UPDATE notification SET isInteracted=? WHERE isHandShake=? AND relevantId=? AND userId=?', [
         1, 1, handshakeId, userId
       ]);
       
       if(updateRequestNotification[0].affectedRows>0){
+        
         await insertNotification(handshake.requestedBy, `${req.user.name} has ${action}ed your handshake request`, handshake.locationId);
         return res.status(200).json({ message: `Handshake ${action}ed successfully` });
   
