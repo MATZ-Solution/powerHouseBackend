@@ -1074,7 +1074,7 @@ exports.addUnassignedScouter = async (req, res) => {
     if (selectResult.affectedRows > 0) {
       const insertInCaptureLog = await queryRunner(
         "INSERT INTO ChangeLog(changed_data, locationId,operation_type) VALUES (?, ?, ?)",
-        [scoutID, projectID,'assigned']
+        [setScoutId, projectID,'assigned']
       );
       return res.status(200).json({ message: "Successfully Assigned Scouter" });
     }
@@ -1252,6 +1252,7 @@ WHERE
       res.status(200).json({
         statusCode: 200,
         message: "Success",
+        
         data: selectResult[0],
       });
     } else {
