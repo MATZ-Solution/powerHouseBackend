@@ -1157,7 +1157,8 @@ exports.updateScoutMember = async (req, res) => {
 exports.getAllocatedLocation = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { limit = 5, page, search = "", projectType } = req.query; // Default search to an empty string
+    console.log("this is user id", userId);
+    const { limit = 5, page=1, search = "", projectType } = req.query; // Default search to an empty string
     const offset = (page - 1) * limit;
     // // console.log("this is limit", req.query);
     const totalCount=`SELECT COUNT(*) AS totalCount
@@ -1279,7 +1280,7 @@ exports.getAllocatedLocationById = async (req, res) => {
     const { userId } = req.user;
     const locationId = req.params.id;
     
-    const { limit = 5, page, search = "", projectType } = req.query; // Default search to an empty string
+    const { limit = 5, page=1, search = "", projectType } = req.query; // Default search to an empty string
     const offset = (page - 1) * limit;
     // // console.log("this is limit", req.query);
     // Base query
@@ -1459,7 +1460,7 @@ exports.getLongAndLat = async (req, res) => {
 exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { limit = 5, page, search = "", projectType, locationId } = req.query;
+    const { limit = 5, page=1, search = "", projectType, locationId } = req.query;
     const offset = (page - 1) * limit;
     
     // now we have to select the scouts based on scoutedById with all the related info from all the tables
