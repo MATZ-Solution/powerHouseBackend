@@ -235,13 +235,7 @@ exports.updateMeetingLogs = async (req, res) => {
             });
           }
         } else {
-          const insertInCaptureLog = await queryRunner(
-            "INSERT INTO ChangeLog(record_id, locationId,table_name,message,changed_data) VALUES (?, ?, ?,?,?)",
-            [createNextMeetingLogResult[0].insertId
-            , 
-            getMeetingLog[0][0].locationId
-            ,'meetings','added',members]
-          );
+          
           return res.status(200).json({
             statusCode: 200,
             message: "Meeting Logs Updated successfully",

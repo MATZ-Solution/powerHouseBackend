@@ -72,7 +72,7 @@ router.get('/getArchitecture', verifyToken ,scoutController.getArchitecture);
 router.get('/getBuilder', verifyToken ,scoutController.getBuilder);
 router.get('/getElectricians', verifyToken ,scoutController.getElectrician);
 router.put('/updateScouteStatus', verifyToken , scoutController.updateScoutStatus);
-router.get('/logs/:id',verifyToken,scoutController.getLogsById)
+router.get('/logs',verifyToken,scoutController.getLogsById)
 
 
 
