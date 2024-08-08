@@ -1160,6 +1160,12 @@ exports.getAllocatedLocation = async (req, res) => {
     const { limit = 5, page, search = "", projectType } = req.query; // Default search to an empty string
     const offset = (page - 1) * limit;
     // // console.log("this is limit", req.query);
+    const totalCount=`SELECT COUNT(*) AS totalCount
+FROM scout
+JOIN scout_member ON scout.scoutedBy = scout_member.id
+WHERE scout.assignedTo IS NOT NULL
+  AND FIND_IN_SET(?, scout.assignedTo)
+  AND scout.projectName LIKE ?`
     // Base query
     let query = `
      SELECT
@@ -1229,7 +1235,7 @@ WHERE
     query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
 
     const selectResult = await queryRunner(query, queryParams);
-    // // console.log("this is allocated location", selectResult[0]);
+    const totalCountResult = await queryRunner(totalCount, [userId, `%${search}%`]);
     if (selectResult[0].length > 0) {
       const locationFiles = [];
       for (const location of selectResult[0]) {
@@ -1252,13 +1258,14 @@ WHERE
       res.status(200).json({
         statusCode: 200,
         message: "Success",
-        
+        totalCount: totalCountResult[0][0]?.totalCount,
         data: selectResult[0],
       });
     } else {
       res.status(200).json({
         statusCode: 200,
         message: "Success",
+        totalCount: 0,
         data: [],
       });
     }
@@ -1475,6 +1482,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
     FROM
       scout
 `;
+
     let queryParams = [];
     if (locationId) {
       query += ` WHERE scout.id = ?`;
@@ -1498,7 +1506,9 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
     }
     query += ` ORDER BY scout.created_at DESC LIMIT ? OFFSET ?`;
     queryParams.push(parseInt(limit), offset);
-    // console.log("this is query", query, queryParams);
+    // console.log("this is query", query, queryParams);\
+    const totalQuery = `SELECT COUNT(*) AS totalCount FROM scout WHERE scout.scoutedBy = ?`;
+    const totalResult = await queryRunner(totalQuery, [userId]);
     const selectResult = await queryRunner(query, queryParams);
     // console.log("this is allocated location", selectResult[0]);
     if (selectResult[0].length > 0) {
@@ -1540,6 +1550,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
         res.status(200).json({
           statusCode: 200,
           message: "Success",
+          total: totalResult[0][0].totalCount,
           data: selectResult[0],
         });
       } catch (error) {
@@ -1553,6 +1564,7 @@ exports.getScoutsByUserIdWithAllInformation = async (req, res) => {
       res.status(200).json({
         statusCode: 200,
         message: "Success",
+        total:0,
         data: [],
       });
     }
