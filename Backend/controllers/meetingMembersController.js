@@ -725,6 +725,55 @@ exports.getMeetingLogs = async (req, res) => {
 };
 
 
+const formatDate = (date) => {
+  
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+exports.getMeetingDates = async (req, res) => {
+  const { userId } = req.user; // Extract userId from the authenticated user
+  const { year, month } = req.query; // Extract year and month from the query parameters
+  
+  // Ensure year and month are valid before using them in the query
+  if (!year || !month) {
+    return res.status(400).json({
+      statusCode: 400,
+      message: "Year and month are required",
+    });
+  }
+
+  try {
+    // Construct SQL query to extract meeting logs for the given month
+    const query = `
+      SELECT startTime 
+      FROM meeting_logs 
+      WHERE DATE_FORMAT(startTime, '%Y-%m') = ? 
+        AND FIND_IN_SET(?, members)
+    `;
+    
+    // Execute the query
+    const queryResult = await queryRunner(query, [`${year}-${month?.length==1?'0'+month:month}`, userId]);
+    
+    // Extract and format dates from query result
+    const datesArray = queryResult[0].map(log => formatDate(log.startTime));
+
+    // Send successful response with formatted dates
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Meeting Logs",
+      data: datesArray,
+    });
+  } catch (error) {
+    console.error('Error fetching meeting dates:', error);
+    // Send error response
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 
 
 

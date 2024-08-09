@@ -334,4 +334,6 @@ router.get("/getMeetingLogList", verifyToken, meetingMembersController.getMeetin
  */
 router.get("/getMeetingLogs", verifyToken, meetingMembersController.getMeetingLogs);
 
+
+router.get('/getMeetingDates', verifyToken, meetingMembersController.getMeetingDates);
 module.exports = router;
