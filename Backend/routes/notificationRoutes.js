@@ -43,7 +43,7 @@
 
 /**
  * @swagger
- * /notify/notifications/{id}:
+ * /notify/notifications:
  *   put:
  *     summary: Mark a Notification as Read
  *     tags: [Notifications]
@@ -51,17 +51,67 @@
  *       - bearerAuth: []
  *     parameters:
  *       - name: id
- *         in: path
+ *         in: query
  *         required: true
+ *         description: ID of the notification to be marked as read
  *         schema:
  *           type: integer
  *     responses:
  *       200:
  *         description: Notification marked as read successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Notification marked as read
+ *       400:
+ *         description: Bad Request - Missing or invalid parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 400
+ *                 message:
+ *                   type: string
+ *                   example: Missing id parameter
  *       404:
- *         description: No Notifications found
+ *         description: Not Found - No notification found with the provided ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 404
+ *                 message:
+ *                   type: string
+ *                   example: No Notifications found
  *       500:
- *         description: Failed to mark notification as read
+ *         description: Internal Server Error - Failed to mark notification as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Failed to mark notification as read
+ *                 error:
+ *                   type: string
+ *                   example: Detailed error message
  */
     router.put("/notifications/:id", verifyToken, notificationController.markNotificationAsRead);
 

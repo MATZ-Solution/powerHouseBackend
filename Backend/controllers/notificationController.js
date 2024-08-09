@@ -74,7 +74,7 @@ const {
 exports.markNotificationAsRead = async (req, res) => {
     try {
       const { userId } = req.user;
-      const { id } = req.params;
+      const { id } = req.query;
 
       const updateResult = await queryRunner(`UPDATE notifications SET is_read = ? WHERE id = ? AND userId = ?`,[true,id,userId]);
       if (updateResult[0].affectedRows > 0) {
