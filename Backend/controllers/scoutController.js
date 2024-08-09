@@ -1833,6 +1833,7 @@ exports.UpdateScoutedLocation = async (req, res) => {
         Object.keys(req.body).forEach(key => {
           if (oldData[key] !== req.body[key]) {
             changes[key] = {
+              name: key,
               oldValue: oldData[key],
               newValue: req.body[key]
             };
