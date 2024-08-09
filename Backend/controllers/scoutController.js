@@ -1831,15 +1831,19 @@ exports.UpdateScoutedLocation = async (req, res) => {
         // now we compare the old data with the new data
         const changes = [];
         Object.keys(req.body).forEach(key => {
-          if (oldData[key] !== req.body[key]) {
-            changes.push({
-              name: key,
-              oldValue: oldData[key],
-              newValue: req.body[key]
-            })
+          
+          if (oldData[0][0][key] != req.body[key]) {
+            if(oldData[0][0][key]){
+              changes.push({
+                name: key,
+                oldValue: oldData[0][0][key],
+                newValue: req.body[key]
+              });
+            }
           }
         });
-        if (Object.keys(changes)?.length > 0) {
+        
+        if (changes?.length > 0) {
           const strigifiedChangedData = JSON.stringify(changes);
           await queryRunner(
             "INSERT INTO ChangeLog (message, locationId, table_name, operation_type, changedBy, changed_data) VALUES (?, ?, ?, ?, ?, ?)",
