@@ -2449,7 +2449,14 @@ exports.getLogsById = async (req, res) => {
     return res.status(200).json({
       statusCode: 200,
       message: 'Success',
-      data: (date && date !== 'null') ? filteredLogs : [
+      data: (date && date !== 'null') ? [
+        ...filteredLogs,
+        {
+          log:{
+            projectName: scout.projectName,
+          }
+        }
+      ] : [
         ...filteredLogs,
         {
           date: scout.created_at,
