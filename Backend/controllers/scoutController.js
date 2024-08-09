@@ -1829,14 +1829,14 @@ exports.UpdateScoutedLocation = async (req, res) => {
       ]);
       if (insertResult[0].affectedRows > 0) {
         // now we compare the old data with the new data
-        const changes = {};
+        const changes = [];
         Object.keys(req.body).forEach(key => {
           if (oldData[key] !== req.body[key]) {
-            changes[key] = {
+            changes.push({
               name: key,
               oldValue: oldData[key],
               newValue: req.body[key]
-            };
+            })
           }
         });
         if (Object.keys(changes)?.length > 0) {
