@@ -13,7 +13,9 @@ const handshakeRoutes = require("./routes/handshakeRoutes");
 const { getConnectionFromPool } = require("./config/connection");
 const http = require("http");
 const { Server } = require("socket.io");
- 
+
+const { swaggerUi, swaggerSpec } = require('./swagger/swaggerDef');
+
 const app = express();
 const server = http.createServer(app); // Use http.createServer to create the server
 
@@ -31,6 +33,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
