@@ -417,8 +417,44 @@ exports.scout = async (req, res) => {
 exports.getscouts = async (req, res) => {
   try {
     // const { userId } = req.user;
-    let query = `SELECT s.id, s.projectType, s.projectName,s.size,s.status,s.address, s.contractorName, s.contractorNumber, s.refrenceId, s.scoutedBy,ar.architectureName, ar.architectureNumber, b.builderName, b.builderNumber, e.electricianName, e.electricianNumber ,s.Builders,s.Electricians,sm.name as scoutedBy, s.created_at FROM scout s LEFT JOIN Architecture AS ar on s.Architectures = ar.id LEFT JOIN Builders AS b on s.Builders = b.id LEFT JOIN Electricians AS e on s.Electricians = e.id LEFT JOIN scout_member sm ON s.scoutedBy = sm.id ORDER BY s.id DESC`;
-
+    let query = `SELECT 
+    s.city,
+    s.refrenceId,
+    s.id,
+    s.assignedTo,
+    s.projectType,
+    s.projectName,
+    s.buildingType,
+    s.size,
+    s.status,
+    s.address,
+    s.contractorName,
+    s.contractorNumber,
+    s.refrenceId,
+    s.scoutedBy,
+    ar.architectureName,
+    ar.architectureNumber,
+    b.builderName,
+    b.builderNumber,
+    e.electricianName,
+    e.electricianNumber,
+    s.Builders,
+    s.Electricians,
+    sm.name as scoutedBy,
+    s.created_at,
+    -- Aggregated names from scout_member based on assignedTo IDs
+    (SELECT GROUP_CONCAT(sm2.name SEPARATOR ', ')
+     FROM scout_member sm2
+     WHERE FIND_IN_SET(sm2.id, s.assignedTo)) AS assignedToNames
+FROM scout s
+LEFT JOIN Architecture AS ar ON s.Architectures = ar.id
+LEFT JOIN Builders AS b ON s.Builders = b.id
+LEFT JOIN Electricians AS e ON s.Electricians = e.id
+LEFT JOIN scout_member sm ON s.scoutedBy = sm.id
+ORDER BY s.id DESC;
+`;
+    
+      
     const selectResult = await queryRunner(query);
     if (selectResult[0].length > 0) {
       res.status(200).json({
@@ -1033,7 +1069,7 @@ exports.getAllotedLocations = async (req, res) => {
 
 exports.getUnAllotedLocations = async (req, res) => {
   try {
-    let query1 = `Select s.id, s.projectName, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
+    let query1 = `Select s.id, s.projectName, s.projectType, s.buildingType, s.city, s.address, s.contractorName, s.contractorNumber,s.assignedTo, s.refrenceId, s.scoutedBy, sm.name as scouter
       FROM scout s
      join scout_member sm 
       on s.scoutedBy = sm.id
@@ -1755,7 +1791,8 @@ exports.UpdateScoutedLocation = async (req, res) => {
         Builders,
         Electricians
   } = req.body;
- 
+ // first we get the old data
+  const oldData = await queryRunner(selectQuery("scout", "id"), [id]);
 
   let query = `
   UPDATE scout set 
@@ -1774,35 +1811,58 @@ exports.UpdateScoutedLocation = async (req, res) => {
         Electricians=?
   where id = ${id}`;
   try {
-    let insertResult = await queryRunner(query, [
-      projectName,
-      type,
-      size,
-      city,
-      area,
-      block,
-      address,
-      contractorName,
-      contractorNumber,
-      buildingType,
-      Architectures,
-        Builders,
-        Electricians
-    ]);
-    if (insertResult[0].affectedRows > 0) {
-      const insertInCaptureLog = await queryRunner(
-        "INSERT INTO ChangeLog(message, locationId,table_name,operation_type,changedBy) VALUES (?, ?, ?,?,?)",
-        [`Location$${'latest'}`, id,'scout','update',userId]
-      );
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Successfully Edit Scout",
-        id: insertResult[0].insertId,
-      });
-    } else {
-      return res.status(500).json({
-        statusCode: 500,
-        message: "Failed to Update Scout",
+    if(oldData[0].length>0){
+      let insertResult = await queryRunner(query, [
+        projectName,
+        type,
+        size,
+        city,
+        area,
+        block,
+        address,
+        contractorName,
+        contractorNumber,
+        buildingType,
+        Architectures,
+          Builders,
+          Electricians
+      ]);
+      if (insertResult[0].affectedRows > 0) {
+        // now we compare the old data with the new data
+        const changes = {};
+        Object.keys(req.body).forEach(key => {
+          if (oldData[key] !== req.body[key]) {
+            changes[key] = {
+              oldValue: oldData[key],
+              newValue: req.body[key]
+            };
+          }
+        });
+        if (Object.keys(changes)?.length > 0) {
+          const strigifiedChangedData = JSON.stringify(changes);
+          await queryRunner(
+            "INSERT INTO ChangeLog (message, locationId, table_name, operation_type, changedBy, changed_data) VALUES (?, ?, ?, ?, ?, ?)",
+            [`Location is updated`, id, 'scout', 'update', userId, strigifiedChangedData]
+          );
+        }
+        
+        
+        return res.status(200).json({
+          statusCode: 200,
+          message: "Successfully Edit Scout",
+          id: insertResult[0].insertId,
+        });
+      } else {
+        return res.status(500).json({
+          statusCode: 500,
+          message: "Failed to Update Scout",
+        });
+      }
+    }
+    else{
+      return res.status(404).json({
+        statusCode: 404,
+        message: "No Data Found",
       });
     }
   } catch (error) {
@@ -2270,7 +2330,7 @@ exports.getLogsById = async (req, res) => {
     const { userId } = req.user;
     const { id, order = 'DESC', search, date } = req.query;
 
-    console.log('req.query', req.query);
+    
 
     if (!id) {
       return res.status(400).json({ statusCode: 400, message: 'ID is required' });
@@ -2411,16 +2471,30 @@ exports.getLogsById = async (req, res) => {
         case 'scout': {
           if (log.operation_type === 'update') {
             const [updatedBy] = await queryRunner('SELECT * FROM scout_member WHERE id = ?', [log.changedBy]);
-            return {
-              date: log.timestamp,
-              log: {
-                type: 'Updates',
-                buildingType: scout.buildingType,
-                projectName: scout.projectName,
-                message: `${log.message.split('$')[0]} is updated to ${log.message.split('$')[1]}`,
-                updatedBy: updatedBy[0],
-              },
-            };
+            if(log?.message?.includes('$')){
+              return {
+                date: log.timestamp,
+                log: {
+                  type: 'Updates',
+                  buildingType: scout.buildingType,
+                  projectName: scout.projectName,
+                  message: `${log.message.split('$')[0]} is updated to ${log.message.split('$')[1]}`,
+                  updatedBy: updatedBy[0],
+                },
+              };
+            }else{
+              return {
+                date: log.timestamp,
+                log: {
+                  type: 'Updates',
+                  buildingType: scout.buildingType,
+                  projectName: scout.projectName,
+                  message: `Following updates are made on ${scout.projectName} project`,
+                  updates: JSON.parse(log.changed_data),
+                  updatedBy: updatedBy[0],
+                },
+              };
+            }
           }
           break;
         }

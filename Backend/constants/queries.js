@@ -134,7 +134,7 @@ exports.selectSOPByIdQuery = `
   
 
 exports.insertCatalogueQuery = "INSERT INTO catalogue (title,document,created_at) VALUES (?,?,?)";
-exports.getAllAloctedLocationQuery = "SELECT scout.id, scout.refrenceId, scout.projectName, scout.buildingType, scout.city, scout.address, scout.contractorName, scout.contractorNumber,scout.assignedTo,scout.status, scout.updated_at,scout.scoutedBy,SM1.name AS scouter,(SELECT GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo)) FROM scout_member SM2 WHERE FIND_IN_SET(SM2.id, scout.assignedTo) ) AS assignedToMember FROM scout scout JOIN scout_member SM1 ON SM1.id = scout.scoutedBy WHERE scout.assignedTo IS NOT NULL GROUP BY scout.id HAVING assignedToMember IS NOT NULL order by id desc";
+exports.getAllAloctedLocationQuery = "SELECT scout.id, scout.refrenceId, scout.projectName,scout.projectType, scout.buildingType, scout.city, scout.address, scout.contractorName, scout.contractorNumber,scout.assignedTo,scout.status, scout.updated_at,scout.scoutedBy,SM1.name AS scouter,(SELECT GROUP_CONCAT(SM2.name ORDER BY FIELD(SM2.id, scout.assignedTo)) FROM scout_member SM2 WHERE FIND_IN_SET(SM2.id, scout.assignedTo) ) AS assignedToMember FROM scout scout JOIN scout_member SM1 ON SM1.id = scout.scoutedBy WHERE scout.assignedTo IS NOT NULL GROUP BY scout.id HAVING assignedToMember IS NOT NULL order by id desc";
 exports.insertArchitectureQuery = "INSERT INTO Architecture (architectureName,architectureNumber) VALUES (?,?)";
 exports.insertBuilderQuery = "INSERT INTO Builders (builderName,builderNumber) VALUES (?,?)";
 exports.insertElectricianQuery = "INSERT INTO Electricians (electricianName,ElectricianNumber) VALUES (?,?)";
